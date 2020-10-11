@@ -1,6 +1,7 @@
 package ru.rdude.fxlib.containers;
 
 import javafx.collections.FXCollections;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.layout.HBox;
@@ -28,7 +29,7 @@ public class MultipleChoiceContainerElement<T> extends Pane {
     /**
      * Horizontal Box holds inside nodes.
      */
-    private HBox hBox;
+    protected HBox hBox;
 
     /**
      * Empty constructor initializes empty array as available elements.
@@ -47,6 +48,7 @@ public class MultipleChoiceContainerElement<T> extends Pane {
         removeButton = new Button("X");
         removeButton.setOnAction(action -> removeFromParent());
         hBox = new HBox(elements, removeButton);
+        hBox.setAlignment(Pos.CENTER);
         getChildren().add(hBox);
         setElements(collection);
     }
@@ -82,5 +84,13 @@ public class MultipleChoiceContainerElement<T> extends Pane {
         if (getParent() instanceof Pane) {
             ((Pane) getParent()).getChildren().remove(this);
         }
+    }
+
+    public ComboBox<T> getComboBoxNode() {
+        return elements;
+    }
+
+    public Button getRemoveButtonNode() {
+        return removeButton;
     }
 }

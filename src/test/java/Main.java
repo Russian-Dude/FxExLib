@@ -7,6 +7,8 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import ru.rdude.fxlib.containers.MultipleChoiceContainer;
+import ru.rdude.fxlib.containers.MultipleChoiceContainerElementWithPercents;
+import ru.rdude.fxlib.containers.MultipleChoiceContainerElementWithTextField;
 import ru.rdude.fxlib.textfields.AutocomplitionTextField;
 
 import java.io.IOException;
@@ -41,6 +43,7 @@ public class Main extends Application {
     private void realTest() {
         List<String> testInputs = List.of("First", "Second", "Third");
         MultipleChoiceContainer<String> container = new MultipleChoiceContainer<>(testInputs);
+        container.setNodeElementType(MultipleChoiceContainerElementWithPercents.class);
         mainPane.getChildren().add(container);
     }
 }
