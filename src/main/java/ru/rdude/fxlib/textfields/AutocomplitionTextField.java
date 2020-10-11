@@ -99,7 +99,7 @@ public class AutocomplitionTextField extends TextField {
                 getSuggestions(enteredText).forEach(suggestion -> {
                     MenuItem menuItem = new MenuItem(suggestion);
                     menuItem.setOnAction(actionEvent -> {
-                        StringBuilder builder = new StringBuilder(getText().toUpperCase());
+                        StringBuilder builder = new StringBuilder(getText());
                         int caretPosition = getCaretPosition();
                         builder.replace(caretPosition - textToReplace.length(), caretPosition, menuItem.getText());
                         setText(builder.toString());
@@ -131,15 +131,15 @@ public class AutocomplitionTextField extends TextField {
     private Set<String> getSuggestions(String input) {
         String remaining = input.toUpperCase();
         for (String variableName : elements) {
-            remaining = remaining.replaceAll(variableName, "");
+            remaining = remaining.replaceAll(variableName.toUpperCase(), "");
         }
-        remaining = input.replaceAll("[\\p{Alpha}\\p{Pc}\\d\\s\\W]+", "");
+        remaining = remaining.replaceAll("[^\\p{Alpha}\\p{Pc}]", "");
         if (remaining.length() < 1)
             return new HashSet<>();
         String finalRemaining = remaining;
         textToReplace = remaining;
         return elements.stream()
-                .filter(name -> name.contains(finalRemaining))
+                .filter(name -> name.toUpperCase().contains(finalRemaining))
                 .collect(Collectors.toSet());
     }
 

@@ -41,8 +41,7 @@ public class Main extends Application {
         List<String> testInputs = List.of("First", "Second", "Third");
         //MultipleChoiceContainer<String> container = new MultipleChoiceContainer<>(testInputs);
         //mainPane.getChildren().add(container);
-        //AutocomplitionTextField textField = new AutocomplitionTextField(testInputs);
-        //mainPane.getChildren().add(textField);
-        mainPane.getChildren().add(new TextField("try cot"));
+        AutocomplitionTextField textField = new AutocomplitionTextField(testInputs);
+        mainPane.getChildren().add(textField);
     }
 }
