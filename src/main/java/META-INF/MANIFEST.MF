@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Main-Class: 
+Class-Path: javafx-controls-16-ea+2.jar javafx-graphics-16-ea+2.jar java
+ fx-controls-16-ea+2-win.jar javafx-base-16-ea+2-win.jar javafx-fxml-16-
+ ea+2.jar javafx-base-16-ea+2.jar javafx-fxml-16-ea+2-win.jar javafx-gra
+ phics-16-ea+2-win.jar
+
