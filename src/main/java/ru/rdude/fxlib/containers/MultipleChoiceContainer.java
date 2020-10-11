@@ -18,6 +18,32 @@ import java.util.stream.Collectors;
 public class MultipleChoiceContainer<T> extends ScrollPane {
 
     /**
+     * This enum used to represent visual element types in Scene Builder.
+     */
+    public enum VisualElementType {
+        BASIC(MultipleChoiceContainerElement.class),
+        WITH_TEXT_FIELD(MultipleChoiceContainerElementWithTextField.class),
+        PERCENT_TEXT_FIELD(MultipleChoiceContainerElementWithPercents.class);
+
+        private Class<? extends MultipleChoiceContainerElement> cl;
+
+        VisualElementType(Class<? extends MultipleChoiceContainerElement> cl) {
+            this.cl = cl;
+        }
+
+        public Class<? extends MultipleChoiceContainerElement> getCl() {
+            return cl;
+        }
+    }
+
+    /**
+     *
+     * This field allows to set visual element type in Scene Builder.
+     * Another way to set visual element type is setNodeElementType method.
+     * @see #setNodeElementType(Class)
+     */
+    private VisualElementType visualElementType;
+    /**
      * Collection of the elements every added visual node can chose from.
      * If collection is empty no visual nodes can be added.
      */
@@ -61,6 +87,30 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
         addButton.setOnAction(actionEvent -> addElement());
         vBox.getChildren().add(addButton);
         setContent(vBox);
+    }
+
+    /**
+     * Get visual element type. If visualElementType field does not represent current element type try to find it and set this value.
+     * @return enum value representing current visual type.
+     */
+    public VisualElementType getVisualElementType() {
+        if (!visualElementType.getCl().equals(elementType)) {
+            for (VisualElementType value : VisualElementType.values()) {
+                if (value.getCl().equals(elementType)) {
+                    visualElementType = value;
+                }
+            }
+        }
+        return visualElementType;
+    }
+
+    /**
+     * Set visual element type.
+     * @param visualElementType visual element type.
+     */
+    public void setVisualElementType(VisualElementType visualElementType) {
+        this.visualElementType = visualElementType;
+        setNodeElementType(visualElementType.getCl());
     }
 
     /**
