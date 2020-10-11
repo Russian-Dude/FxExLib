@@ -4,6 +4,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import ru.rdude.fxlib.containers.MultipleChoiceContainer;
 import ru.rdude.fxlib.textfields.AutocomplitionTextField;
@@ -39,9 +40,7 @@ public class Main extends Application {
 
     private void realTest() {
         List<String> testInputs = List.of("First", "Second", "Third");
-        //MultipleChoiceContainer<String> container = new MultipleChoiceContainer<>(testInputs);
-        //mainPane.getChildren().add(container);
-        AutocomplitionTextField textField = new AutocomplitionTextField(testInputs);
-        mainPane.getChildren().add(textField);
+        MultipleChoiceContainer<String> container = new MultipleChoiceContainer<>(testInputs);
+        mainPane.getChildren().add(container);
     }
 }
