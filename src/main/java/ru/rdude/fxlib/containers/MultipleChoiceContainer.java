@@ -109,8 +109,11 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
 
     /**
      * Set visual element type.
+<<<<<<< HEAD
      * Another way to set visual element type is setNodeElementType method which allows to use custom element types.
      * @see #setNodeElementType(Class)
+=======
+>>>>>>> bd4446c65870ef91a97a8f50ab424bd67df54761
      * @param visualElementType visual element type.
      */
     public void setVisualElementType(VisualElementType visualElementType) {
