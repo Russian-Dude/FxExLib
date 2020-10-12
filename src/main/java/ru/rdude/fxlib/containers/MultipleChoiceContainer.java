@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -156,35 +157,40 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
     }
 
     /**
-     * Add new visual node element if collection of available elements is not empty.
+     * Add new visual node element if collection of available elements is not empty and return Optional of this visual node.
+     * Added element is the first element of the collection.
+     * @return Optional of new visual node element.
      */
-    public void addElement() {
-        availableElements.stream()
+    public Optional<MultipleChoiceContainerElement<T>> addElement() {
+        return availableElements.stream()
                 .findFirst()
-                .ifPresent(this::addElement);
+                .map(this::addElement);
     }
 
     /**
      * Add new visual node element with provided element value to the last position before the add button.
      * @param element element to add.
+     * @return created visual node for element.
      */
-    public void addElement(T element) {
-        addElement(vBox.getChildren().size() - 1, element);
+    public MultipleChoiceContainerElement<T> addElement(T element) {
+        return addElement(vBox.getChildren().size() - 1, element);
     }
 
     /**
      * Add new visual node element with provided element value to the specified position.
      * @param element element to add.
      * @param index index to add to. Note that the add button is in the last index by default.
+     * @return created visual node for element.
      */
-    public void addElement(int index, T element) {
+    public MultipleChoiceContainerElement<T> addElement(int index, T element) {
         try {
             MultipleChoiceContainerElement<T> containerElement = elementType.getDeclaredConstructor(Collection.class).newInstance(availableElements);
             containerElement.setSelectedElement(element);
             vBox.getChildren().add(index, containerElement);
+            return containerElement;
         }
         catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
+            throw new IllegalArgumentException("elementType field instanced with class that does not meet the requirements.");
         }
     }
 
