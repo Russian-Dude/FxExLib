@@ -44,6 +44,7 @@ public class Main extends Application {
         List<String> testInputs = List.of("First", "Second", "Third");
         MultipleChoiceContainer<String> container = new MultipleChoiceContainer<>(testInputs);
         container.setNodeElementType(MultipleChoiceContainerElementWithPercents.class);
+        mainPane.setMinWidth(300);
         mainPane.getChildren().add(container);
     }
 }

@@ -77,15 +77,18 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
      */
     public MultipleChoiceContainer(Collection<T> availableElements) {
         super();
+        visualElementType = VisualElementType.BASIC;
         this.availableElements = availableElements;
         vBox = new VBox();
         addButton = new Button("+");
         elementType = MultipleChoiceContainerElement.class;
-        // max width set to double max value so button will be always stretched to pane size
+        // button max width set to double max value so button will be always stretched to pane size
         addButton.setMaxWidth(Double.MAX_VALUE);
         // add new element when add button pressed
         addButton.setOnAction(actionEvent -> addElement());
         vBox.getChildren().add(addButton);
+        vBox.setMaxWidth(Double.MAX_VALUE);
+        setFitToWidth(true);
         setContent(vBox);
     }
 
@@ -107,7 +110,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
     /**
      * Set visual element type.
      * Another way to set visual element type is setNodeElementType method which allows to use custom element types.
-     * @see #setNodeElementType(Class) 
+     * @see #setNodeElementType(Class)
      * @param visualElementType visual element type.
      */
     public void setVisualElementType(VisualElementType visualElementType) {
