@@ -2,6 +2,7 @@ package ru.rdude.fxlib.containers;
 
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,7 +22,8 @@ public class MultipleChoiceContainerElementWithTextField<T> extends MultipleChoi
     public MultipleChoiceContainerElementWithTextField(Collection<T> collection) {
         super(collection);
         this.textField = new TextField();
-        hBox.getChildren().add(1, textField);
+        HBox.setHgrow(textField, Priority.NEVER);
+        getChildren().add(1, textField);
     }
 
     public String getTextFieldValue() {

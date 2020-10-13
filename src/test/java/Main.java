@@ -3,8 +3,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import ru.rdude.fxlib.containers.MultipleChoiceContainer;
 import ru.rdude.fxlib.containers.MultipleChoiceContainerElementWithPercents;
@@ -44,7 +43,14 @@ public class Main extends Application {
         List<String> testInputs = List.of("First", "Second", "Third");
         MultipleChoiceContainer<String> container = new MultipleChoiceContainer<>(testInputs);
         container.setNodeElementType(MultipleChoiceContainerElementWithPercents.class);
+        MultipleChoiceContainer<String> container2 = new MultipleChoiceContainer<>(testInputs);
+        container2.setNodeElementType(MultipleChoiceContainerElementWithTextField.class);
         mainPane.setMinWidth(300);
-        mainPane.getChildren().add(container);
+        HBox hBox = new HBox(container, container2);
+        container.setMinSize(400d, 400d);
+        container.setMaxSize(400d, 400d);
+        container2.setMinSize(400d, 400d);
+        container2.setMaxSize(400d, 400d);
+        mainPane.getChildren().add(hBox);
     }
 }

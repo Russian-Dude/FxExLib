@@ -89,6 +89,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
         addButton.setOnAction(actionEvent -> addElement());
         vBox.getChildren().add(addButton);
         vBox.setMaxWidth(Double.MAX_VALUE);
+        vBox.setFillWidth(true);
         setFitToWidth(true);
         setContent(vBox);
     }

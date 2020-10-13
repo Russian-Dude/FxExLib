@@ -6,6 +6,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,7 +16,7 @@ import java.util.Collection;
  * If extend this class constructor with provided collection must be implemented so MultipleChoiceContainer could use this class.
  * @param <T> type of the elements.
  */
-public class MultipleChoiceContainerElement<T> extends Pane {
+public class MultipleChoiceContainerElement<T> extends HBox {
 
     /**
      * This ComboBox holds available elements to chose from.
@@ -26,10 +27,6 @@ public class MultipleChoiceContainerElement<T> extends Pane {
      * @see Pane
      */
     private Button removeButton;
-    /**
-     * Horizontal Box holds inside nodes.
-     */
-    protected HBox hBox;
 
     /**
      * Empty constructor initializes empty array as available elements.
@@ -47,9 +44,13 @@ public class MultipleChoiceContainerElement<T> extends Pane {
         elements = new ComboBox<T>();
         removeButton = new Button("X");
         removeButton.setOnAction(action -> removeFromParent());
-        hBox = new HBox(elements, removeButton);
-        hBox.setAlignment(Pos.CENTER);
-        getChildren().add(hBox);
+        getChildren().add(elements);
+        getChildren().add(removeButton);
+        elements.setMaxWidth(Double.MAX_VALUE);
+        setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(elements, Priority.ALWAYS);
+        HBox.setHgrow(removeButton, Priority.ALWAYS);
+        setAlignment(Pos.CENTER);
         setElements(collection);
     }
 

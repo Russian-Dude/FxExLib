@@ -1,5 +1,6 @@
 package ru.rdude.fxlib.containers;
 
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 
 import java.util.ArrayList;
@@ -18,7 +19,12 @@ public class MultipleChoiceContainerElementWithPercents<T> extends MultipleChoic
 
     public MultipleChoiceContainerElementWithPercents(Collection<T> collection) {
         super(collection);
-        hBox.getChildren().add(2, new Label("%"));
+        Label label = new Label("%");
+        label.setMinWidth(10);
+        getChildren().add(2, label);
+        textField.setAlignment(Pos.CENTER);
+        textField.maxWidth(45d);
+        textField.setPrefWidth(45d);
         textField.textProperty().addListener((changeEvent, oldValue, newValue) -> {
             String text = textField.getText().replaceAll("[^\\d.]", "");
             String beforeStep = text;
