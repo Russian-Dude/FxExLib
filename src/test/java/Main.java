@@ -8,6 +8,7 @@ import javafx.stage.Stage;
 import ru.rdude.fxlib.containers.MultipleChoiceContainer;
 import ru.rdude.fxlib.containers.MultipleChoiceContainerElementWithPercents;
 import ru.rdude.fxlib.containers.MultipleChoiceContainerElementWithTextField;
+import ru.rdude.fxlib.containers.TitledMultipleChoiceContainer;
 import ru.rdude.fxlib.textfields.AutocomplitionTextField;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class Main extends Application {
         List<String> testInputs = List.of("First", "Second", "Third");
         MultipleChoiceContainer<String> container = new MultipleChoiceContainer<>(testInputs);
         container.setNodeElementType(MultipleChoiceContainerElementWithPercents.class);
-        MultipleChoiceContainer<String> container2 = new MultipleChoiceContainer<>(testInputs);
+        TitledMultipleChoiceContainer<String> container2 = new TitledMultipleChoiceContainer<>(testInputs, "test node");
         container2.setNodeElementType(MultipleChoiceContainerElementWithTextField.class);
         mainPane.setMinWidth(300);
         HBox hBox = new HBox(container, container2);
