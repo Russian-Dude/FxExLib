@@ -88,7 +88,7 @@ public class MultipleChoiceContainerElement<T> extends HBox {
         }
     }
 
-    public ComboBox<T> getComboBoxNode() {
+    public SearchComboBox<T> getComboBoxNode() {
         return elements;
     }
 

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -62,6 +63,14 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
      * MultipleChoiceContainerElement by default.
      */
     private Class<? extends MultipleChoiceContainerElement> elementType;
+    /**
+     * Search function of SearchComboBox for every created element
+     */
+    private Function<T, String> elementsSearchFunction;
+    /**
+     * Naming function of SearchComboBox for every created element
+     */
+    private Function<T, String> elementsNameFunction;
 
 
 
@@ -111,11 +120,8 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
 
     /**
      * Set visual element type.
-<<<<<<< HEAD
      * Another way to set visual element type is setNodeElementType method which allows to use custom element types.
      * @see #setNodeElementType(Class)
-=======
->>>>>>> bd4446c65870ef91a97a8f50ab424bd67df54761
      * @param visualElementType visual element type.
      */
     public void setVisualElementType(VisualElementType visualElementType) {
@@ -186,6 +192,12 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
     public MultipleChoiceContainerElement<T> addElement(int index, T element) {
         try {
             MultipleChoiceContainerElement<T> containerElement = elementType.getDeclaredConstructor(Collection.class).newInstance(availableElements);
+            if (elementsSearchFunction != null) {
+                containerElement.getComboBoxNode().setSearchBy(elementsSearchFunction);
+            }
+            if (elementsNameFunction != null) {
+                containerElement.getComboBoxNode().setNameBy(elementsNameFunction);
+            }
             containerElement.setSelectedElement(element);
             vBox.getChildren().add(index, containerElement);
             return containerElement;
@@ -203,4 +215,11 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
         this.elementType = elementType;
     }
 
+    public void setSearchBy(Function<T, String> elementsSearchFunction) {
+        this.elementsSearchFunction = elementsSearchFunction;
+    }
+
+    public void setNameBy(Function<T, String> elementsNameFunction) {
+        this.elementsNameFunction = elementsNameFunction;
+    }
 }
