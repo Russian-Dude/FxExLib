@@ -4,13 +4,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.ComboBox;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.util.StringConverter;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -28,7 +26,7 @@ public class SearchComboBox<T> extends ComboBox<T> {
 
     private FilteredList<T> filteredList;
     private boolean isTyped;
-    private Function<T, String> getElementSearchFunction;
+    private Set<Function<T, String>> getElementSearchFunctions;
     private Map<String, T> stringConverterMap;
 
 
@@ -43,7 +41,7 @@ public class SearchComboBox<T> extends ComboBox<T> {
         initShowListener();
         setItems(filteredList);
         isTyped = false;
-        getElementSearchFunction = Object::toString;
+        getElementSearchFunctions = Set.of(Object::toString);
     }
 
     public void setCollection(Collection<T> collection) {
@@ -56,8 +54,13 @@ public class SearchComboBox<T> extends ComboBox<T> {
         setNameBy(function);
     }
 
-    public void setSearchBy(Function<T, String> function) {
-        this.getElementSearchFunction = function;
+    @SafeVarargs
+    public final void setSearchBy(Function<T, String>... functions) {
+        setSearchBy(Arrays.asList(functions));
+    }
+
+    public void setSearchBy(Collection<Function<T, String>> functions) {
+        this.getElementSearchFunctions = new HashSet<>(functions);
     }
 
     public void setNameBy(Function<T, String> function) {
@@ -87,6 +90,7 @@ public class SearchComboBox<T> extends ComboBox<T> {
                         .findFirst()
                         .orElse("");
             }
+
             @Override
             public T fromString(String s) {
                 return stringConverterMap.get(s);
@@ -97,15 +101,20 @@ public class SearchComboBox<T> extends ComboBox<T> {
 
 
     private void initTextListener() {
-        getEditor().addEventHandler(KeyEvent.KEY_TYPED, event -> {
-            isTyped = true;
+        getEditor().addEventHandler(KeyEvent.KEY_TYPED, event -> isTyped = true);
+        // for some reason key_typed capture delete and backspace after text changed so extra event handler here:
+        getEditor().addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.BACK_SPACE || event.getCode() == KeyCode.DELETE) {
+                isTyped = true;
+            }
         });
         getEditor().textProperty().addListener(((observableValue, oldV, newV) -> {
             // filter elements only when text field changed when typing and not when value changed in any other way
             if (isTyped) {
                 isTyped = false;
                 if (!newV.isEmpty() && isShowing() && isEditable()) {
-                    filteredList.setPredicate(e -> getElementSearchFunction.apply(e).toLowerCase().contains(newV.toLowerCase()));
+                    filteredList.setPredicate(e -> getElementSearchFunctions.stream()
+                            .anyMatch(func -> func.apply(e).toLowerCase().contains(newV.toLowerCase())));
                 } else {
                     filteredList.setPredicate(e -> true);
                 }

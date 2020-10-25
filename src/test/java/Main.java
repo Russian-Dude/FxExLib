@@ -58,6 +58,7 @@ public class Main extends Application {
         SearchComboBox<TestClass> searchComboBox = new SearchComboBox<>();
         searchComboBox.setCollection(List.of(te1, te2, te3, te4, te5, te6));
         searchComboBox.setNameAndSearchBy(TestClass::getName);
+        searchComboBox.setSearchBy(TestClass::getName, testClass -> String.valueOf(testClass.getValue()));
 
 
         HBox hBox = new HBox(container, vBox, searchComboBox);
