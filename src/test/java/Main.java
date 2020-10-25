@@ -5,10 +5,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import ru.rdude.fxlib.containers.MultipleChoiceContainer;
-import ru.rdude.fxlib.containers.MultipleChoiceContainerElementWithPercents;
-import ru.rdude.fxlib.containers.MultipleChoiceContainerElementWithTextField;
-import ru.rdude.fxlib.containers.TitledMultipleChoiceContainer;
+import ru.rdude.fxlib.containers.*;
 import ru.rdude.fxlib.textfields.AutocomplitionTextField;
 
 import java.io.IOException;
@@ -46,12 +43,13 @@ public class Main extends Application {
         container.setNodeElementType(MultipleChoiceContainerElementWithPercents.class);
         TitledMultipleChoiceContainer<String> container2 = new TitledMultipleChoiceContainer<>(testInputs, "test node");
         container2.setNodeElementType(MultipleChoiceContainerElementWithTextField.class);
+        TitledMultipleChoiceContainer<String> container3 = new TitledMultipleChoiceContainer<>(testInputs, "test node");
+        container3.setNodeElementType(MultipleChoiceContainerElementWithAutofillTextField.class);
         mainPane.setMinWidth(300);
-        HBox hBox = new HBox(container, container2);
+        VBox vBox = new VBox(container2, container3);
+        HBox hBox = new HBox(container, vBox);
         container.setMinSize(400d, 400d);
         container.setMaxSize(400d, 400d);
-        container2.setMinSize(400d, 400d);
-        container2.setMaxSize(400d, 400d);
         mainPane.getChildren().add(hBox);
     }
 }

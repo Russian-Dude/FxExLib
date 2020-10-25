@@ -7,6 +7,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import ru.rdude.fxlib.boxes.SearchComboBox;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,7 +22,7 @@ public class MultipleChoiceContainerElement<T> extends HBox {
     /**
      * This ComboBox holds available elements to chose from.
      */
-    private ComboBox<T> elements;
+    private SearchComboBox<T> elements;
     /**
      * Remove button to remove this holder from a parent if parent extends Pane class.
      * @see Pane
@@ -41,7 +42,7 @@ public class MultipleChoiceContainerElement<T> extends HBox {
      */
     public MultipleChoiceContainerElement(Collection<T> collection) {
         super();
-        elements = new ComboBox<T>();
+        elements = new SearchComboBox<>();
         removeButton = new Button("X");
         removeButton.setOnAction(action -> removeFromParent());
         getChildren().add(elements);
@@ -59,7 +60,7 @@ public class MultipleChoiceContainerElement<T> extends HBox {
      * @param collection collection of available elements.
      */
     public void setElements(Collection<T> collection) {
-        elements.setItems(FXCollections.observableList(new ArrayList<T>(collection)));
+        elements.setCollection(collection);
     }
 
     /**
