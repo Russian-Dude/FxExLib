@@ -1,21 +1,35 @@
 package ru.rdude.fxlib.boxes;
 
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.ComboBox;
 import javafx.scene.input.KeyEvent;
+import javafx.util.StringConverter;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
+/**
+ * Extended version of ComboBox.
+ * When open elements popup, editable mode will be enabled. When closed - disabled.
+ * Elements can be searched by typing in the text field.
+ * Elements searched by default based on toString() method of element, this can be changed by passing
+ * function in the setSearchBy() method.
+ * Elements representation can be changed without need to manually customize string converter, by passing function
+ * to the setNameBy() method.
+ * Both options can be set at once with setNameAndSearchBy() method.
+ * Items can be set from any collection by using setCollection() method.
+ */
 public class SearchComboBox<T> extends ComboBox<T> {
 
     private FilteredList<T> filteredList;
     private boolean isTyped;
+    private Function<T, String> getElementSearchFunction;
+    private Map<String, T> stringConverterMap;
 
 
     public SearchComboBox() {
@@ -29,6 +43,7 @@ public class SearchComboBox<T> extends ComboBox<T> {
         initShowListener();
         setItems(filteredList);
         isTyped = false;
+        getElementSearchFunction = Object::toString;
     }
 
     public void setCollection(Collection<T> collection) {
@@ -36,20 +51,61 @@ public class SearchComboBox<T> extends ComboBox<T> {
         setItems(filteredList);
     }
 
+    public void setNameAndSearchBy(Function<T, String> function) {
+        setSearchBy(function);
+        setNameBy(function);
+    }
 
-    /**
-     * Set listener that will listen to this text input and generate suggestions based on it.
-     */
+    public void setSearchBy(Function<T, String> function) {
+        this.getElementSearchFunction = function;
+    }
+
+    public void setNameBy(Function<T, String> function) {
+        stringConverterMap = new HashMap<>();
+        for (T t : filteredList) {
+            String name = function.apply(t);
+            if (stringConverterMap.containsKey(name)) {
+                String newName = name;
+                int sameNames = 0;
+                while (stringConverterMap.containsKey(newName)) {
+                    sameNames++;
+                    newName = name + " (" + sameNames + ")";
+                }
+                name = newName;
+            }
+            stringConverterMap.put(name, t);
+        }
+        StringConverter<T> stringConverter = new StringConverter<T>() {
+            @Override
+            public String toString(T t) {
+                if (t == null) {
+                    return "";
+                }
+                return stringConverterMap.entrySet().stream()
+                        .filter(entry -> entry.getValue() == t)
+                        .map(Map.Entry::getKey)
+                        .findFirst()
+                        .orElse("");
+            }
+            @Override
+            public T fromString(String s) {
+                return stringConverterMap.get(s);
+            }
+        };
+        setConverter(stringConverter);
+    }
+
+
     private void initTextListener() {
         getEditor().addEventHandler(KeyEvent.KEY_TYPED, event -> {
             isTyped = true;
         });
         getEditor().textProperty().addListener(((observableValue, oldV, newV) -> {
-            // filter elements only when text field changed when typing and not when value changed in any other ways
+            // filter elements only when text field changed when typing and not when value changed in any other way
             if (isTyped) {
                 isTyped = false;
                 if (!newV.isEmpty() && isShowing() && isEditable()) {
-                    filteredList.setPredicate(e -> e.toString().toLowerCase().contains(newV.toLowerCase()));
+                    filteredList.setPredicate(e -> getElementSearchFunction.apply(e).toLowerCase().contains(newV.toLowerCase()));
                 } else {
                     filteredList.setPredicate(e -> true);
                 }
