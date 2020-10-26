@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldListCell;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -28,6 +29,7 @@ public class SearchPane<T> extends Pane {
     private HBox mainHBox;
     private ListView<T> listView;
     private TextField searchTextField;
+    private AnchorPane extraPane;
 
     private FilteredList<T> filteredList;
     private Map<Object, Predicate<T>> predicates;
@@ -45,10 +47,11 @@ public class SearchPane<T> extends Pane {
         predicates = new HashMap<>();
         searchTextField = new TextField();
         searchTextFunctions = new HashSet<>();
+        extraPane = new AnchorPane();
         searchTextFunctions.add(Object::toString);
         VBox leftVBox = new VBox(searchTextField, listView);
         leftVBox.setSpacing(5d);
-        mainHBox = new HBox(leftVBox);
+        mainHBox = new HBox(leftVBox, extraPane);
         getChildren().add(mainHBox);
         initTextSearch();
     }
@@ -197,7 +200,6 @@ public class SearchPane<T> extends Pane {
         controls.forEach(control -> control.addEventHandler(EventType.ROOT, (event) -> updateSearch()));
     }
 
-
     /**
      * Add node to the left from the list view. Try to link child controls to T getter functions.
      * Getter method names of the objects in search pane must be same as controller field names ("get" and "is" are ignored).
@@ -235,6 +237,15 @@ public class SearchPane<T> extends Pane {
             }
         }
         addSearchOptions(functionMap);
+    }
+
+    public void setCollection(Collection<T> collection) {
+        this.filteredList = new FilteredList<>(FXCollections.observableList(new ArrayList<>(collection)));
+        listView.setItems(filteredList);
+    }
+
+    public AnchorPane getExtraPane() {
+        return extraPane;
     }
 
     public ListView<T> getListView() {

@@ -1,6 +1,8 @@
 package ru.rdude.fxlib.containers;
 
 import javafx.scene.control.Button;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogPane;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,9 +18,9 @@ public class MultipleChoiceContainerExtendedElement<T> extends MultipleChoiceCon
 
     public MultipleChoiceContainerExtendedElement(Collection<T> collection) {
         super(collection);
-        this.adderButton = new Button("ADD");
+        this.adderButton = new Button("O");
         getChildren().add(0, adderButton);
-        searchDialog = new SearchDialog(collection);
-        adderButton.setOnAction((event) -> searchDialog.showAndWait());
+        searchDialog = new SearchDialog<>(collection);
+        adderButton.setOnAction(event -> searchDialog.showAndWait().ifPresent(this::setSelectedElement));
     }
 }
