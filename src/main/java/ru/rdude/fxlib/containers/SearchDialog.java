@@ -45,6 +45,10 @@ public class SearchDialog<R> extends Dialog<R> {
         getDialogPane().setContent(searchPane);
     }
 
+    public void setCollection(Collection<R> collection) {
+        searchPane.setCollection(collection);
+    }
+
     public SearchPane<R> getSearchPane() {
         return searchPane;
     }

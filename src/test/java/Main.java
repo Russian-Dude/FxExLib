@@ -1,5 +1,6 @@
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Control;
 import javafx.scene.control.RadioButton;
@@ -45,15 +46,6 @@ public class Main extends Application {
     }
 
     private void realTest() {
-        List<String> testInputs = List.of("First", "Second", "Third");
-        MultipleChoiceContainer<String> container = new MultipleChoiceContainer<>(testInputs);
-        container.setNodeElementType(MultipleChoiceContainerExtendedElement.class);
-        TitledMultipleChoiceContainer<String> container2 = new TitledMultipleChoiceContainer<>(testInputs, "test node");
-        container2.setNodeElementType(MultipleChoiceContainerElementWithTextField.class);
-        TitledMultipleChoiceContainer<String> container3 = new TitledMultipleChoiceContainer<>(testInputs, "test node");
-        container3.setNodeElementType(MultipleChoiceContainerElementWithAutofillTextField.class);
-        mainPane.setMinWidth(300);
-        VBox vBox = new VBox(container2, container3);
 
         TestClass te1 = new TestClass("first", 1, true);
         TestClass te2 = new TestClass("second", 2, false);
@@ -66,6 +58,20 @@ public class Main extends Application {
         searchComboBox.setCollection(List.of(te1, te2, te3, te4, te5, te6));
         searchComboBox.setNameAndSearchBy(TestClass::getName);
         searchComboBox.setSearchBy(TestClass::getName, testClass -> String.valueOf(testClass.getValue()));
+
+        MultipleChoiceContainerExtended<TestClass, SearchPane> container = new MultipleChoiceContainerExtended<>(testClassList);
+        container.setNameBy(TestClass::getName);
+        container.setSearchBy(TestClass::getName);
+        Map<Function<SearchPane, Control>, Function<TestClass, ?>> functionMap = new HashMap<>();
+        functionMap.put(SearchPane::getSearchTextField, TestClass::getName);
+
+
+        TitledMultipleChoiceContainer<TestClass> container2 = new TitledMultipleChoiceContainer<>(testClassList, "test node");
+        container2.setNodeElementType(MultipleChoiceContainerElementWithTextField.class);
+        TitledMultipleChoiceContainer<TestClass> container3 = new TitledMultipleChoiceContainer<>(testClassList, "test node");
+        container3.setNodeElementType(MultipleChoiceContainerElementWithAutofillTextField.class);
+        mainPane.setMinWidth(300);
+        VBox vBox = new VBox(container2, container3);
 
         TextField textField = new TextField();
         RadioButton radioButton = new RadioButton("fourth");
@@ -92,11 +98,13 @@ public class Main extends Application {
         private int value;
         private TestClass anotherReference;
         private boolean isTrue;
+        private TextField textField;
 
         public TestClass(String name, int value, boolean isTrue) {
             this.name = name;
             this.value = value;
             this.isTrue = isTrue;
+            textField = new TextField();
         }
 
         public String getName() {
@@ -129,6 +137,14 @@ public class Main extends Application {
 
         public void setTrue(boolean aTrue) {
             isTrue = aTrue;
+        }
+
+        public TextField getTextField() {
+            return textField;
+        }
+
+        public void setTextField(TextField textField) {
+            this.textField = textField;
         }
     }
 }

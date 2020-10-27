@@ -23,6 +23,8 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class SearchPane<T> extends Pane {
 
@@ -104,6 +106,68 @@ public class SearchPane<T> extends Pane {
         });
     }
 
+    public void addSearchOption(Control control, Function<T, ?> getter) {
+        predicates.put(control, (t) -> {
+            Object value = getter.apply(t);
+            boolean result = false;
+            if (control instanceof TextInputControl) {
+                result = ((String) value).contains(((TextInputControl) control).getText());
+            } else if (control instanceof ComboBoxBase) {
+                Object controlValue = ((ComboBoxBase<?>) control).getValue();
+                if (controlValue == null) {
+                    result = true;
+                } else {
+                    result = controlValue.equals(value);
+                }
+            } else if (control instanceof ChoiceBox) {
+                Object controlValue = ((ChoiceBox<?>) control).getValue();
+                if (controlValue == null) {
+                    result = true;
+                } else {
+                    result = controlValue.equals(value);
+                }
+            } else if (control instanceof HTMLEditor) {
+                result = ((String) value).contains(((HTMLEditor) control).getHtmlText());
+            } else if (control instanceof Spinner) {
+                result = ((Spinner<?>) control).getValue().equals(value);
+            } else if (control instanceof CheckBox) {
+                Boolean boolValue = null;
+                try {
+                    boolValue = (boolean) value;
+                } catch (Exception ignore) {
+                }
+                if (boolValue != null) {
+                    result = ((CheckBox) control).isSelected() == boolValue;
+                } else if (((CheckBox) control).isSelected()) {
+                    result = ((CheckBox) control).getText().equals(value.toString());
+                } else {
+                    result = true;
+                }
+            } else if (control instanceof RadioButton) {
+                Boolean boolValue = null;
+                try {
+                    boolValue = (boolean) value;
+                } catch (Exception ignore) {
+                }
+                if (boolValue != null) {
+                    result = ((RadioButton) control).isSelected() == boolValue;
+                } else if (((RadioButton) control).isSelected()) {
+                    result = ((RadioButton) control).getText().equals(value.toString());
+                } else {
+                    result = true;
+                }
+            } else if (control instanceof ValueProvider) {
+                result = ((ValueProvider<?>) control).getValue().equals(value);
+            } else {
+                throw new IllegalArgumentException("Controls can only be be instances of: " +
+                        "TextInputControl, ComboBoxBase, ChoiceBox, HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider. " +
+                        "Control creating this exception is: " + control.getClass());
+            }
+            return result;
+        });
+        control.addEventHandler(EventType.ROOT, (event) -> updateSearch());
+    }
+
     /**
      * Link controls to T methods.
      * Controls can only be be instances of: TextInputControl, ComboBoxBase, ChoiceBox,
@@ -113,81 +177,12 @@ public class SearchPane<T> extends Pane {
      * HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider.
      */
     public void addSearchOptions(Map<Control, Function<T, ?>> functionMap) {
-        functionMap.forEach(((control, tFunction) -> {
-            predicates.put(control, (t) -> {
-                Object value = tFunction.apply(t);
-                boolean result = false;
-                if (control instanceof TextInputControl) {
-                    result = ((String) value).contains(((TextInputControl) control).getText());
-                }
-                else if (control instanceof ComboBoxBase) {
-                    Object controlValue = ((ComboBoxBase<?>) control).getValue();
-                    if (controlValue == null) {
-                        result = true;
-                    }
-                    else {
-                        result = controlValue.equals(value);
-                    }
-                }
-                else if (control instanceof ChoiceBox) {
-                    Object controlValue = ((ChoiceBox<?>) control).getValue();
-                    if (controlValue == null) {
-                        result = true;
-                    }
-                    else {
-                        result = controlValue.equals(value);
-                    }
-                }
-                else if (control instanceof HTMLEditor) {
-                    result = ((String) value).contains(((HTMLEditor) control).getHtmlText());
-                }
-                else if (control instanceof Spinner) {
-                    result = ((Spinner<?>) control).getValue().equals(value);
-                }
-                else if (control instanceof CheckBox) {
-                    Boolean boolValue = null;
-                    try {
-                        boolValue = (boolean) value;
-                    }
-                    catch (Exception ignore) {}
-                    if (boolValue != null) {
-                        result = ((CheckBox) control).isSelected() == boolValue;
-                    }
-                    else if (((CheckBox) control).isSelected()) {
-                        result = ((CheckBox) control).getText().equals(value.toString());
-                    }
-                    else {
-                        result = true;
-                    }
-                }
-                else if (control instanceof RadioButton) {
-                    Boolean boolValue = null;
-                    try {
-                        boolValue = (boolean) value;
-                    }
-                    catch (Exception ignore) {}
-                    if (boolValue != null) {
-                        result = ((RadioButton) control).isSelected() == boolValue;
-                    }
-                    else if (((RadioButton) control).isSelected()) {
-                        result = ((RadioButton) control).getText().equals(value.toString());
-                    }
-                    else {
-                        result = true;
-                    }
-                }
-                else if (control instanceof ValueProvider) {
-                    result = ((ValueProvider<?>) control).getValue().equals(value);
-                }
-                else {
-                    throw new IllegalArgumentException("Controls can only be be instances of: " +
-                            "TextInputControl, ComboBoxBase, ChoiceBox, HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider. " +
-                            "Control creating this exception is: " + control.getClass());
-                }
-                return result;
-            });
-            control.addEventHandler(EventType.ROOT, (event) -> updateSearch());
-        }));
+        functionMap.forEach((this::addSearchOption));
+    }
+
+    public void setSearchOptions(Map<Control, Function<T, ?>> functionMap) {
+        this.predicates = new HashMap<>();
+        addSearchOptions(functionMap);
     }
 
     /**
@@ -250,6 +245,10 @@ public class SearchPane<T> extends Pane {
 
     public ListView<T> getListView() {
         return listView;
+    }
+
+    public TextField getSearchTextField() {
+        return searchTextField;
     }
 
     private void initTextSearch() {

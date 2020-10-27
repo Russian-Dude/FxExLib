@@ -28,6 +28,18 @@ public class MultipleChoiceContainerElement<T> extends HBox {
      * @see Pane
      */
     private Button removeButton;
+    /**
+     * Button to open extended search dialog.
+     */
+    private Button searchButton;
+    /**
+     * Extended search dialog.
+     */
+    private SearchDialog<T> searchDialog;
+    /**
+     * Is extended search on and search button visible.
+     */
+    private boolean extendedSearch;
 
     /**
      * Empty constructor initializes empty array as available elements.
@@ -42,9 +54,13 @@ public class MultipleChoiceContainerElement<T> extends HBox {
      */
     public MultipleChoiceContainerElement(Collection<T> collection) {
         super();
+        extendedSearch = false;
         elements = new SearchComboBox<>();
+        searchButton = new Button("O");
         removeButton = new Button("X");
         removeButton.setOnAction(action -> removeFromParent());
+        searchButton.setOnAction(action -> searchDialog.showAndWait().ifPresent(this::setSelectedElement));
+        searchDialog = new SearchDialog<>(collection);
         getChildren().add(elements);
         getChildren().add(removeButton);
         elements.setMaxWidth(Double.MAX_VALUE);
@@ -61,6 +77,26 @@ public class MultipleChoiceContainerElement<T> extends HBox {
      */
     public void setElements(Collection<T> collection) {
         elements.setCollection(collection);
+        if (searchDialog != null) {
+            searchDialog.setCollection(collection);
+        }
+    }
+
+    public boolean isExtendedSearch() {
+        return extendedSearch;
+    }
+
+    public void setExtendedSearch(boolean extendedSearch) {
+        this.extendedSearch = extendedSearch;
+        if (extendedSearch && searchDialog == null) {
+            searchDialog = new SearchDialog<>(elements.getItems());
+        }
+        if (extendedSearch && !getChildren().contains(searchButton)) {
+            getChildren().add(0, searchButton);
+        }
+        else if (!extendedSearch) {
+            getChildren().remove(searchButton);
+        }
     }
 
     /**
@@ -92,7 +128,15 @@ public class MultipleChoiceContainerElement<T> extends HBox {
         return elements;
     }
 
-    public Button getRemoveButtonNode() {
+    public Button getRemoveButton() {
         return removeButton;
+    }
+
+    public Button getSearchButton() {
+        return searchButton;
+    }
+
+    public SearchDialog<T> getSearchDialog() {
+        return searchDialog;
     }
 }

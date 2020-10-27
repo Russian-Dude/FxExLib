@@ -1,13 +1,15 @@
 package ru.rdude.fxlib.containers;
 
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Control;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
+
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
  * Uses to contain multiple elements of provided collection.
  * New elements can be dynamically added and deleted from this container.
  * Type of the node that represent chosen element can be set as class extended from MultipleChoiceContainerElement.
+ *
  * @param <T> type of the elements.
  */
 public class MultipleChoiceContainer<T> extends ScrollPane {
@@ -25,6 +28,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
     public enum VisualElementType {
         BASIC(MultipleChoiceContainerElement.class),
         WITH_TEXT_FIELD(MultipleChoiceContainerElementWithTextField.class),
+        WITH_AUTOFILL_TEXT_FIELD(MultipleChoiceContainerElementWithAutofillTextField.class),
         PERCENT_TEXT_FIELD(MultipleChoiceContainerElementWithPercents.class);
 
         private Class<? extends MultipleChoiceContainerElement> cl;
@@ -39,9 +43,9 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
     }
 
     /**
-     *
      * This field allows to set visual element type in Scene Builder.
      * Another way to set visual element type is setNodeElementType method.
+     *
      * @see #setNodeElementType(Class)
      */
     private VisualElementType visualElementType;
@@ -49,7 +53,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
      * Collection of the elements every added visual node can chose from.
      * If collection is empty no visual nodes can be added.
      */
-    private Collection<T> availableElements;
+    protected Collection<T> availableElements;
     /**
      * Button to add new visual node representing element.
      */
@@ -57,21 +61,20 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
     /**
      * Vertical box uses to hold the add button and element visual nodes.
      */
-    private VBox vBox;
+    protected VBox vBox;
     /**
      * Class that will be used to visually represent every selected element.
      * MultipleChoiceContainerElement by default.
      */
-    private Class<? extends MultipleChoiceContainerElement> elementType;
+    protected Class<? extends MultipleChoiceContainerElement> elementType;
     /**
-     * Search function of SearchComboBox for every created element
+     * Search functions of SearchComboBox for every created element
      */
-    private Function<T, String> elementsSearchFunction;
+    protected Set<Function<T, String>> elementsSearchFunctions;
     /**
      * Naming function of SearchComboBox for every created element
      */
-    private Function<T, String> elementsNameFunction;
-
+    protected Function<T, String> elementsNameFunction;
 
 
     /**
@@ -83,6 +86,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
 
     /**
      * Constructor with provided elements to chose from.
+     *
      * @param availableElements elements to chose from. If empty no visual nodes can be added.
      */
     public MultipleChoiceContainer(Collection<T> availableElements) {
@@ -105,6 +109,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
 
     /**
      * Get visual element type. If visualElementType field does not represent current element type try to find it and set this value.
+     *
      * @return enum value representing current visual type.
      */
     public VisualElementType getVisualElementType() {
@@ -121,8 +126,9 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
     /**
      * Set visual element type.
      * Another way to set visual element type is setNodeElementType method which allows to use custom element types.
-     * @see #setNodeElementType(Class)
+     *
      * @param visualElementType visual element type.
+     * @see #setNodeElementType(Class)
      */
     public void setVisualElementType(VisualElementType visualElementType) {
         this.visualElementType = visualElementType;
@@ -131,6 +137,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
 
     /**
      * Set available elements to chose from.
+     *
      * @param availableElements elements to chose from. If empty no visual nodes can be added.
      */
     public void setAvailableElements(Collection<T> availableElements) {
@@ -140,6 +147,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
 
     /**
      * Get selected elements. To get visual nodes of elements use getNodesElements method.
+     *
      * @return list of selected elements.
      * @see #getNodesElements()
      */
@@ -151,6 +159,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
 
     /**
      * Get visual nodes of this selected elements. To get only elements use getElements method.
+     *
      * @return list of visual nodes for each element. Every node is MultipleChoiceContainerElement type or
      * extends from it.
      * @see #getElements()
@@ -166,6 +175,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
     /**
      * Add new visual node element if collection of available elements is not empty and return Optional of this visual node.
      * Added element is the first element of the collection.
+     *
      * @return Optional of new visual node element.
      */
     public Optional<MultipleChoiceContainerElement<T>> addElement() {
@@ -176,6 +186,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
 
     /**
      * Add new visual node element with provided element value to the last position before the add button.
+     *
      * @param element element to add.
      * @return created visual node for element.
      */
@@ -185,15 +196,16 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
 
     /**
      * Add new visual node element with provided element value to the specified position.
+     *
      * @param element element to add.
-     * @param index index to add to. Note that the add button is in the last index by default.
+     * @param index   index to add to. Note that the add button is in the last index by default.
      * @return created visual node for element.
      */
     public MultipleChoiceContainerElement<T> addElement(int index, T element) {
         try {
             MultipleChoiceContainerElement<T> containerElement = elementType.getDeclaredConstructor(Collection.class).newInstance(availableElements);
-            if (elementsSearchFunction != null) {
-                containerElement.getComboBoxNode().setSearchBy(elementsSearchFunction);
+            if (elementsSearchFunctions != null) {
+                containerElement.getComboBoxNode().setSearchBy(elementsSearchFunctions);
             }
             if (elementsNameFunction != null) {
                 containerElement.getComboBoxNode().setNameBy(elementsNameFunction);
@@ -201,22 +213,27 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
             containerElement.setSelectedElement(element);
             vBox.getChildren().add(index, containerElement);
             return containerElement;
-        }
-        catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new IllegalArgumentException("elementType field instanced with class that does not meet the requirements.");
         }
     }
 
     /**
      * Set visual node type that represent element.
+     *
      * @param elementType class extended MultipleChoiceContainerElement
      */
     public void setNodeElementType(Class<? extends MultipleChoiceContainerElement> elementType) {
         this.elementType = elementType;
     }
 
-    public void setSearchBy(Function<T, String> elementsSearchFunction) {
-        this.elementsSearchFunction = elementsSearchFunction;
+    @SafeVarargs
+    public final void setSearchBy(Function<T, String>... elementsSearchFunctions) {
+        this.elementsSearchFunctions = new HashSet<>(List.of(elementsSearchFunctions));
+    }
+
+    public void setSearchBy(Set<Function<T, String>> elementsSearchFunctions) {
+        this.elementsSearchFunctions = elementsSearchFunctions;
     }
 
     public void setNameBy(Function<T, String> elementsNameFunction) {
