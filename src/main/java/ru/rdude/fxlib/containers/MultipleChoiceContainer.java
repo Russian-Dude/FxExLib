@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  *
  * @param <T> type of the elements.
  */
-public class MultipleChoiceContainer<T> extends ScrollPane {
+public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvider<List<T>> {
 
     /**
      * This enum used to represent visual element types in Scene Builder.
@@ -156,6 +156,11 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
         return getNodesElements().stream()
                 .map(MultipleChoiceContainerElement::getSelectedElement)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<T> getValue() {
+        return getElements();
     }
 
     /**

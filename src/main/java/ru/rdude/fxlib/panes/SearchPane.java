@@ -134,7 +134,12 @@ public class SearchPane<T> extends Pane {
                 } catch (Exception ignore) {
                 }
                 if (boolValue != null) {
-                    result = ((CheckBox) control).isSelected() == boolValue;
+                    if (((CheckBox) control).isSelected()) {
+                        result = ((CheckBox) control).isSelected() == boolValue;
+                    }
+                    else {
+                        result = true;
+                    }
                 } else if (((CheckBox) control).isSelected()) {
                     result = ((CheckBox) control).getText().equals(value.toString());
                 } else {
@@ -147,14 +152,23 @@ public class SearchPane<T> extends Pane {
                 } catch (Exception ignore) {
                 }
                 if (boolValue != null) {
-                    result = ((RadioButton) control).isSelected() == boolValue;
+                    if (((RadioButton) control).isSelected()) {
+                        result = ((RadioButton) control).isSelected() == boolValue;
+                    }
+                    else {
+                        result = true;
+                    }
                 } else if (((RadioButton) control).isSelected()) {
                     result = ((RadioButton) control).getText().equals(value.toString());
                 } else {
                     result = true;
                 }
             } else if (control instanceof ValueProvider) {
-                result = ((ValueProvider<?>) control).getValue().equals(value);
+                if (((ValueProvider) control).getValue() instanceof Collection) {
+                    result = ((Collection) value).containsAll((Collection<?>) ((ValueProvider) control).getValue());
+                } else {
+                    result = ((ValueProvider<?>) control).getValue().equals(value);
+                }
             } else {
                 throw new IllegalArgumentException("Controls can only be be instances of: " +
                         "TextInputControl, ComboBoxBase, ChoiceBox, HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider. " +
@@ -169,9 +183,10 @@ public class SearchPane<T> extends Pane {
      * Link controls to T methods.
      * Controls can only be be instances of: TextInputControl, ComboBoxBase, ChoiceBox,
      * HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider.
+     *
      * @param functionMap this map link controls with T object functions.
      * @throws IllegalArgumentException if control is not instance of TextInputControl, ComboBoxBase, ChoiceBox,
-     * HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider.
+     *                                  HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider.
      */
     public void addSearchOptions(Map<Control, Function<T, ?>> functionMap) {
         functionMap.forEach((this::addSearchOption));
@@ -184,8 +199,9 @@ public class SearchPane<T> extends Pane {
 
     /**
      * Add custom predicate to search. List view will be updated every time action on controls set is handled.
+     *
      * @param customNodePredicate list view will be filtered based on this predicate.
-     * @param controls list view will be filtered every time event on any of this controls is handled.
+     * @param controls            list view will be filtered every time event on any of this controls is handled.
      */
     public void addSearchOptions(Set<Control> controls, Predicate<T> customNodePredicate) {
         predicates.put(new Object(), customNodePredicate);
@@ -197,8 +213,9 @@ public class SearchPane<T> extends Pane {
      * Getter method names of the objects in search pane must be same as controller field names ("get" and "is" are ignored).
      * Note: this method use reflection and force filtering use reflection as well. So if performance is an issue use
      * addSearchOptions method to link controls with methods manually.
-     * @param node node to add.
-     * @param controller node controller.
+     *
+     * @param node        node to add.
+     * @param controller  node controller.
      * @param objectClass class of the collection object.
      */
     public <C> void addNodeAndAutoLinkControls(Node node, C controller, Class<T> objectClass) {
@@ -223,8 +240,8 @@ public class SearchPane<T> extends Pane {
                             }
                             throw new IllegalArgumentException("Can not invoke get method");
                         });
+                    } catch (IllegalAccessException e) {
                     }
-                    catch (IllegalAccessException e) { }
                 }
             }
         }
@@ -251,8 +268,7 @@ public class SearchPane<T> extends Pane {
     public void setHasSearchTextField(boolean value) {
         if (!value && listVBox.getChildren().contains(searchTextField)) {
             listVBox.getChildren().remove(searchTextField);
-        }
-        else if (value && !listVBox.getChildren().contains(searchTextField)) {
+        } else if (value && !listVBox.getChildren().contains(searchTextField)) {
             listVBox.getChildren().add(listVBox.getChildren().size() > 1 ? 1 : 0, searchTextField);
         }
     }
