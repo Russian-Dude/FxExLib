@@ -3,7 +3,7 @@ package ru.rdude.fxlib.panes;
 import javafx.collections.FXCollections;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.EventType;
-import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldListCell;
@@ -12,7 +12,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.HTMLEditor;
-import javafx.util.Callback;
 import javafx.util.StringConverter;
 import ru.rdude.fxlib.containers.ValueProvider;
 
@@ -20,15 +19,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class SearchPane<T> extends Pane {
 
     private HBox mainHBox;
+    private VBox listVBox;
     private ListView<T> listView;
     private TextField searchTextField;
     private AnchorPane extraPane;
@@ -51,9 +48,9 @@ public class SearchPane<T> extends Pane {
         searchTextFunctions = new HashSet<>();
         extraPane = new AnchorPane();
         searchTextFunctions.add(Object::toString);
-        VBox leftVBox = new VBox(searchTextField, listView);
-        leftVBox.setSpacing(5d);
-        mainHBox = new HBox(leftVBox, extraPane);
+        listVBox = new VBox(searchTextField, listView);
+        listVBox.setSpacing(5d);
+        mainHBox = new HBox(listVBox, extraPane);
         getChildren().add(mainHBox);
         initTextSearch();
     }
@@ -249,6 +246,43 @@ public class SearchPane<T> extends Pane {
 
     public TextField getSearchTextField() {
         return searchTextField;
+    }
+
+    public void setHasSearchTextField(boolean value) {
+        if (!value && listVBox.getChildren().contains(searchTextField)) {
+            listVBox.getChildren().remove(searchTextField);
+        }
+        else if (value && !listVBox.getChildren().contains(searchTextField)) {
+            listVBox.getChildren().add(listVBox.getChildren().size() > 1 ? 1 : 0, searchTextField);
+        }
+    }
+
+    public void setExtraPanePosition(Pos position) {
+        mainHBox.getChildren().remove(extraPane);
+        listVBox.getChildren().remove(extraPane);
+        switch (position) {
+            case TOP_LEFT:
+            case BOTTOM_LEFT:
+            case CENTER_LEFT:
+            case BASELINE_LEFT:
+                mainHBox.getChildren().add(0, extraPane);
+                break;
+            case TOP_RIGHT:
+            case BOTTOM_RIGHT:
+            case CENTER_RIGHT:
+            case BASELINE_RIGHT:
+                mainHBox.getChildren().add(mainHBox.getChildren().size() - 1, extraPane);
+                break;
+            case TOP_CENTER:
+                listVBox.getChildren().add(0, extraPane);
+                break;
+            case BOTTOM_CENTER:
+            case BASELINE_CENTER:
+                listVBox.getChildren().add(listVBox.getChildren().size() - 1, extraPane);
+                break;
+            case CENTER:
+                listVBox.getChildren().add(1, extraPane);
+        }
     }
 
     private void initTextSearch() {

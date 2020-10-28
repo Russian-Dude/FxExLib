@@ -177,8 +177,9 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
         }
 
         public class S5 {
-            public void setExtendedSearchFunctions(Map<Function<C, Control>, Function<T, ?>> extendedSearchFunctions) {
+            public ExtendedOptionsBuilder<T, C>  setExtendedSearchFunctions(Map<Function<C, Control>, Function<T, ?>> extendedSearchFunctions) {
                 ExtendedOptionsBuilder.this.extendedSearchFunctions = extendedSearchFunctions;
+                return ExtendedOptionsBuilder.this;
             }
 
             public S5 addExtendedSearchFunction(Function<C, Control> controlGetter, Function<T, ?> elementFieldGetter) {
