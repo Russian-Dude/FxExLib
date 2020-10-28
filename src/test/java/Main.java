@@ -60,6 +60,14 @@ public class Main extends Application {
         searchComboBox.setSearchBy(TestClass::getName, testClass -> String.valueOf(testClass.getValue()));
 
         MultipleChoiceContainerExtended<TestClass, SearchPane> container = new MultipleChoiceContainerExtended<>(testClassList);
+        container.setNodeElementType(MultipleChoiceContainerElementTwoChoice.class);
+        MultipleChoiceContainerElementTwoChoice.ExtendedOptionsBuilder<TestClass, SearchPane> optionsBuilder = MultipleChoiceContainerElementTwoChoice.extendedOptionsBuilder();
+        optionsBuilder.setCollection(testClassList)
+                .setNameByFunction(TestClass::getName)
+                .setSearchByFunction(TestClass::getName)
+                .setExtendedSearchNode(SearchPane.class)
+                .addExtendedSearchFunction(SearchPane::getSearchTextField, TestClass::getName);
+        container.setExtendedOptions(optionsBuilder);
         container.setNameBy(TestClass::getName);
         container.setSearchBy(TestClass::getName);
         Map<Function<SearchPane, Control>, Function<TestClass, ?>> functionMap = new HashMap<>();
@@ -67,7 +75,13 @@ public class Main extends Application {
         container.setExtendedSearchOptionsNode(SearchPane.class);
         container.setExtendedSearchOptions(functionMap);
 
-
+/*
+ *                first option - collection of the second value Search Combo Box (Collection);
+ *                second option - nameBy function for Search Combo Box (Function V, String);
+ *                third option - searchBy function for SearchComboBox (Function V, String);
+ *                fourth option- node class for extended search (Class or FXMLLoader);
+ *                fifth option - search options.
+ */
         TitledMultipleChoiceContainer<TestClass> container2 = new TitledMultipleChoiceContainer<>(testClassList, "test node");
         container2.setNodeElementType(MultipleChoiceContainerElementWithTextField.class);
         TitledMultipleChoiceContainer<TestClass> container3 = new TitledMultipleChoiceContainer<>(testClassList, "test node");

@@ -91,6 +91,9 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
                         elementsSearchExtendedFunctions.entrySet().stream()
                                 .collect(Collectors.toMap(entry -> entry.getKey().apply(finalController), Map.Entry::getValue, (a, b) -> a, HashMap::new)));
             }
+            if (getExtendedOptions() != null) {
+                containerElement.setExtendedOptions(getExtendedOptions());
+            }
             containerElement.setSelectedElement(element);
             vBox.getChildren().add(index, containerElement);
             return containerElement;

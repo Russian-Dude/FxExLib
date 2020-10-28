@@ -56,7 +56,7 @@ public class MultipleChoiceContainerElement<T> extends HBox {
         super();
         extendedSearch = false;
         elements = new SearchComboBox<>();
-        searchButton = new Button("O");
+        searchButton = new Button("...");
         removeButton = new Button("X");
         removeButton.setOnAction(action -> removeFromParent());
         searchButton.setOnAction(action -> searchDialog.showAndWait().ifPresent(this::setSelectedElement));
@@ -123,6 +123,8 @@ public class MultipleChoiceContainerElement<T> extends HBox {
             ((Pane) getParent()).getChildren().remove(this);
         }
     }
+
+    public void setExtendedOptions(Object... options) {}
 
     public SearchComboBox<T> getComboBoxNode() {
         return elements;

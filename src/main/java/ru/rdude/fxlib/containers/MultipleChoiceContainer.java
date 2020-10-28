@@ -1,13 +1,9 @@
 package ru.rdude.fxlib.containers;
 
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.Control;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Function;
@@ -29,7 +25,8 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
         BASIC(MultipleChoiceContainerElement.class),
         WITH_TEXT_FIELD(MultipleChoiceContainerElementWithTextField.class),
         WITH_AUTOFILL_TEXT_FIELD(MultipleChoiceContainerElementWithAutofillTextField.class),
-        PERCENT_TEXT_FIELD(MultipleChoiceContainerElementWithPercents.class);
+        PERCENT_TEXT_FIELD(MultipleChoiceContainerElementWithPercents.class),
+        WITH_TWO_VALUES(MultipleChoiceContainerElementTwoChoice.class);
 
         private Class<? extends MultipleChoiceContainerElement> cl;
 
@@ -75,6 +72,10 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
      * Naming function of SearchComboBox for every created element
      */
     protected Function<T, String> elementsNameFunction;
+    /**
+     * If children elements need some extended option to initialize when created this is used.
+     */
+    private Object[] extendedOptions;
 
 
     /**
@@ -210,12 +211,23 @@ public class MultipleChoiceContainer<T> extends ScrollPane {
             if (elementsNameFunction != null) {
                 containerElement.getComboBoxNode().setNameBy(elementsNameFunction);
             }
+            if (extendedOptions != null) {
+                containerElement.setExtendedOptions(extendedOptions);
+            }
             containerElement.setSelectedElement(element);
             vBox.getChildren().add(index, containerElement);
             return containerElement;
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new IllegalArgumentException("elementType field instanced with class that does not meet the requirements.");
         }
+    }
+
+    public Object[] getExtendedOptions() {
+        return extendedOptions;
+    }
+
+    public void setExtendedOptions(Object... extendedOptions) {
+        this.extendedOptions = extendedOptions;
     }
 
     /**
