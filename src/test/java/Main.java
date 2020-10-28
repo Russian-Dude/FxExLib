@@ -64,6 +64,8 @@ public class Main extends Application {
         container.setSearchBy(TestClass::getName);
         Map<Function<SearchPane, Control>, Function<TestClass, ?>> functionMap = new HashMap<>();
         functionMap.put(SearchPane::getSearchTextField, TestClass::getName);
+        container.setExtendedSearchOptionsNode(SearchPane.class);
+        container.setExtendedSearchOptions(functionMap);
 
 
         TitledMultipleChoiceContainer<TestClass> container2 = new TitledMultipleChoiceContainer<>(testClassList, "test node");

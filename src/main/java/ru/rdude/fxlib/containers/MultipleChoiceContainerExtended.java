@@ -3,6 +3,7 @@ package ru.rdude.fxlib.containers;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
+import javafx.scene.control.TextField;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -10,7 +11,14 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class MultipleChoiceContainerExtended<T, N extends Node> extends MultipleChoiceContainer<T> {
+/**
+ * Extended version of MultipleChoiceContainer to use with big amount of available elements.
+ * Every element of this container has Search Dialog that helps to find elements with filters.
+ * This search dialog can be customised by with linking Control nodes getters with element's class getters.
+ * @param <T> type of the elements in container.
+ * @param <C> controller type.
+ */
+public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContainer<T> {
 
     /**
      * Search functions of Search dialog used when extended search is on.
@@ -18,13 +26,13 @@ public class MultipleChoiceContainerExtended<T, N extends Node> extends Multiple
      * Key - function with node as argument - node that will be added to search pane.
      * Value - function to get value from T element.
      */
-    private Map<Function<N, Control>, Function<T, ?>> elementsSearchExtendedFunctions;
+    private Map<Function<C, Control>, Function<T, ?>> elementsSearchExtendedFunctions;
     /**
      * Node class that will be created and set into the Search Pane of the Search Dialog if extended search is on.
      * Creation of this node is set by loader field or by class field. Setting this field will set loader field to null.
      * This will work with elementsSearchExtendedFunctions Map.
      */
-    private Class<N> extendedSearchExtraNodeClass;
+    private Class<? extends Node> extendedSearchExtraNodeClass;
     /**
      * Loader that will create node and set it into the Search Pane of the Search Dialog if extended search is on.
      * Creation of this node is set by loader field or by class field. Setting this field will set extendedSearchExtraNodeClass field to null.
@@ -62,23 +70,26 @@ public class MultipleChoiceContainerExtended<T, N extends Node> extends Multiple
                 containerElement.getSearchDialog().getSearchPane().setNameBy(elementsNameFunction);
             }
             containerElement.setExtendedSearch(true);
-            N extraSearchNode = null;
+            Node extraSearchNode = null;
+            C controller = null;
             if (loader != null) {
                 try {
                     extraSearchNode = loader.load();
+                    controller = loader.getController();
                 } catch (IOException e) {
                     throw new IllegalStateException("Loader was not set properly.");
                 }
             }
             else if (extendedSearchExtraNodeClass != null) {
                 extraSearchNode = extendedSearchExtraNodeClass.getDeclaredConstructor().newInstance();
+                controller = (C) extraSearchNode;
             }
             if (extraSearchNode != null) {
                 containerElement.getSearchDialog().getSearchPane().getExtraPane().getChildren().add(extraSearchNode);
-                N finalExtraSearchNode = extraSearchNode;
+                C finalController = controller;
                 containerElement.getSearchDialog().getSearchPane().addSearchOptions(
                         elementsSearchExtendedFunctions.entrySet().stream()
-                                .collect(Collectors.toMap(entry -> entry.getKey().apply(finalExtraSearchNode), Map.Entry::getValue, (a, b) -> a, HashMap::new)));
+                                .collect(Collectors.toMap(entry -> entry.getKey().apply(finalController), Map.Entry::getValue, (a, b) -> a, HashMap::new)));
             }
             containerElement.setSelectedElement(element);
             vBox.getChildren().add(index, containerElement);
@@ -89,29 +100,29 @@ public class MultipleChoiceContainerExtended<T, N extends Node> extends Multiple
     }
 
 
-    public void setExtendedSearchOptions(Map<Function<N, Control>, Function<T, ?>> functionMap) {
+    public void setExtendedSearchOptions(Map<Function<C, Control>, Function<T, ?>> functionMap) {
         this.elementsSearchExtendedFunctions = functionMap;
     }
 
-    public void setExtendedSearchOptions(Class<N> extendedOptionsNode, Map<Function<N, Control>, Function<T, ?>> functionMap) {
+    public void setExtendedSearchOptions(Class<? extends Node> extendedOptionsNode, Map<Function<C, Control>, Function<T, ?>> functionMap) {
         setExtendedSearchOptionsNode(extendedOptionsNode);
         setExtendedSearchOptions(functionMap);
     }
 
-    public void setExtendedSearchOptions(FXMLLoader loader, Map<Function<N, Control>, Function<T, ?>> functionMap) {
+    public void setExtendedSearchOptions(FXMLLoader loader, Map<Function<C, Control>, Function<T, ?>> functionMap) {
         setExtendedSearchOptionsNode(loader);
         setExtendedSearchOptions(functionMap);
     }
 
-    public void addExtendedSearchOption(Function<N, Control> controlGetter, Function<T, ?> elementGetter) {
+    public void addExtendedSearchOption(Function<C, Control> controlGetter, Function<T, ?> elementGetter) {
         elementsSearchExtendedFunctions.put(controlGetter, elementGetter);
     }
 
-    public void removeExtendedSearchOption(Function<N, Control> controlGetter) {
+    public void removeExtendedSearchOption(Function<C, Control> controlGetter) {
         elementsSearchExtendedFunctions.remove(controlGetter);
     }
 
-    public void setExtendedSearchOptionsNode(Class<N> extendedOptionsNode) {
+    public void setExtendedSearchOptionsNode(Class<? extends Node> extendedOptionsNode) {
         this.loader = null;
         this.extendedSearchExtraNodeClass = extendedOptionsNode;
     }
