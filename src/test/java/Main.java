@@ -14,6 +14,7 @@ import ru.rdude.fxlib.panes.SearchPane;
 import ru.rdude.fxlib.textfields.AutocomplitionTextField;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,8 @@ public class Main extends Application {
         TestClass te4 = new TestClass("fourth", 4, false);
         TestClass te5 = new TestClass("second", 5, true);
         TestClass te6 = new TestClass("fifth", 6, false);
+        te5.setCollection(new ArrayList<>());
+        te1.setCollection(new ArrayList<>());
         List<TestClass> testClassList = List.of(te1, te2, te3, te4, te5, te6);
         SearchComboBox<TestClass> searchComboBox = new SearchComboBox<>();
         searchComboBox.setCollection(List.of(te1, te2, te3, te4, te5, te6));
@@ -94,7 +97,7 @@ public class Main extends Application {
 
         Map<Control, Function<TestClass, ?>> map = new HashMap<>();
         map.put(textField, TestClass::getName);
-        map.put(radioButton, TestClass::isTrue);
+        map.put(radioButton, TestClass::getCollection);
 
         SearchPane<TestClass> searchPane = new SearchPane<>(testClassList);
         searchPane.setTextFieldSearchBy(TestClass::getName, (t) -> String.valueOf(t.getValue()));
@@ -115,12 +118,14 @@ public class Main extends Application {
         private TestClass anotherReference;
         private boolean isTrue;
         private TextField textField;
+        private List<String> collection;
 
         public TestClass(String name, int value, boolean isTrue) {
             this.name = name;
             this.value = value;
             this.isTrue = isTrue;
             textField = new TextField();
+            collection = List.of("One", "fourth");
         }
 
         public String getName() {
@@ -161,6 +166,14 @@ public class Main extends Application {
 
         public void setTextField(TextField textField) {
             this.textField = textField;
+        }
+
+        public List<String> getCollection() {
+            return collection;
+        }
+
+        public void setCollection(List<String> collection) {
+            this.collection = collection;
         }
     }
 }

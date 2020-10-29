@@ -22,6 +22,48 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+/**
+ * List View that can be filtered with complex filtering.
+ * Naming of elements represented in list view can be set by passing a function to setNameBy method. Default is Object::toString.
+ * By default there is a TextField on the top of the list. Input text of this text field is used to sort
+ * list, applying one or more search functions on elements of the list.
+ * Use setTextFieldSearchBy method to set text field search functions. Default is Object::toString.
+ *
+ * To use complex filtering link Controls to Functions called on every element of the list view by passing
+ * Control and Function or Map with Control keys and Function values to addSearchOptions or setSearchOptions methods.
+ * Search will work based on provided Controls:
+ *
+ *      TextInputControl, HTMLEditor:
+ *      If linked Function returns a Collection, checks if collection values after applying toString to them
+ *      contains control text .
+ *      Else checks if function return value after applying toString equals to control text.
+ *
+ *      ComboBox, ChoiceBox, Spinner, ValueProvider:
+ *      If linked Function returns a Collection, checks if collection contains selected value.
+ *      Else checks if function return value equals to selected value.
+ *
+ *      CheckBox:
+ *      If linked function returns a Collection, checks if collection values after applying toString to them
+ *      contains control text.
+ *      Else if function returns a boolean, checks if this boolean equals to isSelected of the check box.
+ *      Else checks if function return value after applying toString equals control text.
+ *
+ *      RadioButton:
+ *      Same as CheckBox but filters only when RadioButton is selected.
+ *
+ * Also filtering can be set by passing custom Predicate to addSearchOptions method.
+ *
+ * Also filtering can be set automatically with addNodeAndAutoLinkControls method by simply passing
+ * a Node that contain controls, Controller for this node (may be the Node itself) and Class of the elements in ListView.
+ * Controller fields names and object class getters should have the same name (ignoring "get" and "is").
+ * However this method use reflection and generates filter options based on reflection. So if performance
+ * is an issue use manual linking with addSearchOptions or setSearchOptions methods.
+ *
+ * @param <T> type of elements in ListView of this SearchPane.
+ */
+/*
+addNodeAndAutoLinkControls(Node node, C controller, Class<T> objectClass)
+ */
 public class SearchPane<T> extends Pane {
 
     private HBox mainHBox;
@@ -120,6 +162,8 @@ public class SearchPane<T> extends Pane {
                 Object controlValue = ((ChoiceBox<?>) control).getValue();
                 if (controlValue == null) {
                     result = true;
+                } else if (value instanceof Collection) {
+                    result = ((Collection<?>) value).contains(((ChoiceBox<?>) control).getValue());
                 } else {
                     result = controlValue.equals(value);
                 }
@@ -134,16 +178,12 @@ public class SearchPane<T> extends Pane {
                 } catch (Exception ignore) {
                 }
                 if (boolValue != null) {
-                    if (((CheckBox) control).isSelected()) {
-                        result = ((CheckBox) control).isSelected() == boolValue;
-                    }
-                    else {
-                        result = true;
-                    }
-                } else if (((CheckBox) control).isSelected()) {
-                    result = ((CheckBox) control).getText().equals(value.toString());
+                    result = ((CheckBox) control).isSelected() == boolValue;
+                } else if (value instanceof Collection) {
+                    String checkBoxText = ((CheckBox) control).getText();
+                    result = ((Collection<?>) value).stream().map(Object::toString).anyMatch(s -> s.equals(checkBoxText));
                 } else {
-                    result = true;
+                    result = ((CheckBox) control).getText().equals(value.toString());
                 }
             } else if (control instanceof RadioButton) {
                 Boolean boolValue = null;
@@ -154,18 +194,22 @@ public class SearchPane<T> extends Pane {
                 if (boolValue != null) {
                     if (((RadioButton) control).isSelected()) {
                         result = ((RadioButton) control).isSelected() == boolValue;
-                    }
-                    else {
+                    } else {
                         result = true;
                     }
                 } else if (((RadioButton) control).isSelected()) {
-                    result = ((RadioButton) control).getText().equals(value.toString());
+                    if (value instanceof Collection) {
+                        String radioButtonText = ((RadioButton) control).getText();
+                        result = ((Collection<?>) value).stream().map(Object::toString).anyMatch(s -> s.equals(radioButtonText));
+                    } else {
+                        result = ((RadioButton) control).getText().equals(value.toString());
+                    }
                 } else {
                     result = true;
                 }
             } else if (control instanceof ValueProvider) {
                 if (((ValueProvider) control).getValue() instanceof Collection) {
-                    result = ((Collection) value).containsAll((Collection<?>) ((ValueProvider) control).getValue());
+                    result = ((Collection<?>) value).containsAll((Collection<?>) ((ValueProvider<?>) control).getValue());
                 } else {
                     result = ((ValueProvider<?>) control).getValue().equals(value);
                 }
@@ -219,7 +263,7 @@ public class SearchPane<T> extends Pane {
      * @param objectClass class of the collection object.
      */
     public <C> void addNodeAndAutoLinkControls(Node node, C controller, Class<T> objectClass) {
-        mainHBox.getChildren().add(node);
+        extraPane.getChildren().add(node);
         Map<Control, Function<T, ?>> functionMap = new HashMap<>();
         Set<Field> controllerFields = new HashSet<>();
         for (Field declaredField : controller.getClass().getDeclaredFields()) {
@@ -240,12 +284,17 @@ public class SearchPane<T> extends Pane {
                             }
                             throw new IllegalArgumentException("Can not invoke get method");
                         });
-                    } catch (IllegalAccessException e) {
+                    } catch (IllegalAccessException ignored) {
                     }
                 }
             }
         }
-        addSearchOptions(functionMap);
+        functionMap.forEach((key, value) -> {
+            try {
+                addSearchOption(key, value);
+            }
+            catch (IllegalArgumentException ignore) {}
+        });
     }
 
     public void setCollection(Collection<T> collection) {
@@ -255,6 +304,10 @@ public class SearchPane<T> extends Pane {
 
     public AnchorPane getExtraPane() {
         return extraPane;
+    }
+
+    public void addExtraSearchNode(Node node) {
+        extraPane.getChildren().add(node);
     }
 
     public ListView<T> getListView() {
