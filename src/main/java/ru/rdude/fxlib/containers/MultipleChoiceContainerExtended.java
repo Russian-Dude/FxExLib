@@ -3,7 +3,9 @@ package ru.rdude.fxlib.containers;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import ru.rdude.fxlib.panes.SearchPane;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -39,7 +41,15 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
      * This will work with elementsSearchExtendedFunctions Map.
      */
     private FXMLLoader loader;
+    /**
+     * Function to apply to popup in list view in extended search window.
+     */
+    private Function<T, Node> extendedSearchPopupFunction;
 
+    /**
+     * Extended search popup builder.
+     */
+    private ExtendedSearchPopupBuilder popupBuilder;
 
     public MultipleChoiceContainerExtended() {
         this(new ArrayList<>());
@@ -94,6 +104,14 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
             if (getExtendedOptions() != null) {
                 containerElement.setExtendedOptions(getExtendedOptions());
             }
+            if (extendedSearchPopupFunction != null) {
+                containerElement.getSearchDialog().getSearchPane().setPopupFunction(extendedSearchPopupFunction);
+            }
+            else if (popupBuilder != null) {
+                SearchPane<T>.PopupBuilder searchPanePopupBuilder = containerElement.getSearchDialog().getSearchPane().popupBuilder();
+                popupBuilder.functions.forEach(function -> function.apply(searchPanePopupBuilder));
+                searchPanePopupBuilder.apply();
+            }
             containerElement.setSelectedElement(element);
             vBox.getChildren().add(index, containerElement);
             return containerElement;
@@ -133,6 +151,79 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
     public void setExtendedSearchOptionsNode(FXMLLoader extendedOptionsNodeLoader) {
         this.loader = extendedOptionsNodeLoader;
         this.extendedSearchExtraNodeClass = null;
+    }
+
+    public void setExtendedSearchPopupFunction(Function<T, Node> function) {
+        this.extendedSearchPopupFunction = function;
+        this.popupBuilder = null;
+    }
+
+    public ExtendedSearchPopupBuilder extendedSearchPopupBuilder() {
+        if (popupBuilder == null) {
+            popupBuilder = new ExtendedSearchPopupBuilder();
+        }
+        return popupBuilder;
+    }
+
+    public class ExtendedSearchPopupBuilder {
+
+        private List<Function<SearchPane<T>.PopupBuilder, ?>> functions;
+        private String popupStyle;
+        private String textStyle;
+
+        ExtendedSearchPopupBuilder() {
+            functions = new ArrayList<>();
+        }
+
+        public ExtendedSearchPopupBuilder addText(String text) {
+            functions.add(builder -> builder.addText(text));
+            return this;
+        }
+
+        public ExtendedSearchPopupBuilder addText(Label label) {
+            functions.add(builder -> builder.addText(label));
+            return this;
+        }
+
+        public ExtendedSearchPopupBuilder addText(Function<T, String> function) {
+            functions.add(builder -> builder.addText(function));
+            return this;
+        }
+
+        public ExtendedSearchPopupBuilder addNode(Function<T, Node> function) {
+            functions.add(builder -> builder.addNode(function));
+            return this;
+        }
+
+        public void apply() {
+            extendedSearchPopupFunction = null;
+        }
+
+        public ExtendedSearchPopupBuilder clear() {
+            functions.clear();
+            return this;
+        }
+
+        public ExtendedSearchPopupBuilder setStyle(String value) {
+            this.popupStyle = value;
+            return this;
+        }
+
+        public void setTextStyle(String textStyle) {
+            this.textStyle = textStyle;
+        }
+
+        List<Function<SearchPane<T>.PopupBuilder, ?>> getFunctions() {
+            return functions;
+        }
+
+        String getPopupStyle() {
+            return popupStyle;
+        }
+
+        String getTextStyle() {
+            return textStyle;
+        }
     }
 
 }

@@ -3,6 +3,7 @@ package ru.rdude.fxlib.panes;
 import javafx.collections.FXCollections;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.EventType;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -12,6 +13,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.HTMLEditor;
+import javafx.stage.Popup;
 import javafx.util.StringConverter;
 import ru.rdude.fxlib.containers.ValueProvider;
 
@@ -19,51 +21,55 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * List View that can be filtered with complex filtering.
+ * List View that can be filtered with complex filtering and complex tooltips for each element of the List View can be set.
  * Naming of elements represented in list view can be set by passing a function to setNameBy method. Default is Object::toString.
- * By default there is a TextField on the top of the list. Input text of this text field is used to sort
+ * By default there is a TextField on the top of the list. Input text of this text field is used to filter
  * list, applying one or more search functions on elements of the list.
  * Use setTextFieldSearchBy method to set text field search functions. Default is Object::toString.
- *
- * To use complex filtering link Controls to Functions called on every element of the list view by passing
+ * <p>
+ * To use complex filtering link Controls to Functions that called on every element of the list view by passing
  * Control and Function or Map with Control keys and Function values to addSearchOptions or setSearchOptions methods.
  * Search will work based on provided Controls:
- *
- *      TextInputControl, HTMLEditor:
- *      If linked Function returns a Collection, checks if collection values after applying toString to them
- *      contains control text .
- *      Else checks if function return value after applying toString equals to control text.
- *
- *      ComboBox, ChoiceBox, Spinner, ValueProvider:
- *      If linked Function returns a Collection, checks if collection contains selected value.
- *      Else checks if function return value equals to selected value.
- *
- *      CheckBox:
- *      If linked function returns a Collection, checks if collection values after applying toString to them
- *      contains control text.
- *      Else if function returns a boolean, checks if this boolean equals to isSelected of the check box.
- *      Else checks if function return value after applying toString equals control text.
- *
- *      RadioButton:
- *      Same as CheckBox but filters only when RadioButton is selected.
- *
+ * <p>
+ * TextInputControl, HTMLEditor:
+ * If linked Function returns a Collection, checks if collection values after applying toString to them
+ * contains control text .
+ * Else checks if function return value after applying toString equals to control text.
+ * <p>
+ * ComboBox, ChoiceBox, Spinner, ValueProvider:
+ * If linked Function returns a Collection, checks if collection contains selected value.
+ * Else checks if function return value equals to selected value.
+ * <p>
+ * CheckBox:
+ * If linked function returns a Collection, checks if collection values after applying toString to them
+ * contains control text.
+ * Else if function returns a boolean, checks if this boolean equals to isSelected of the check box.
+ * Else checks if function return value after applying toString equals control text.
+ * <p>
+ * RadioButton:
+ * Same as CheckBox but filters only when RadioButton is selected.
+ * <p>
  * Also filtering can be set by passing custom Predicate to addSearchOptions method.
- *
+ * <p>
  * Also filtering can be set automatically with addNodeAndAutoLinkControls method by simply passing
  * a Node that contain controls, Controller for this node (may be the Node itself) and Class of the elements in ListView.
- * Controller fields names and object class getters should have the same name (ignoring "get" and "is").
- * However this method use reflection and generates filter options based on reflection. So if performance
+ * Controller fields names and object class getters must have the same name (ignoring "get" and "is").
+ * However this method uses reflection and generates filter options based on reflection. So if performance
  * is an issue use manual linking with addSearchOptions or setSearchOptions methods.
+ * <p>
+ * Elements of the List View can have custom tooltips.
+ * those tooltips can be set with setPopupFunction method or by using a popup builder.
+ * Customizing tooltips with a builder is preferred way due to popups generated with setPopupFunction will
+ * create new Node provided by function for tooltip every time tooltip is shown.
  *
  * @param <T> type of elements in ListView of this SearchPane.
  */
-/*
-addNodeAndAutoLinkControls(Node node, C controller, Class<T> objectClass)
- */
+
 public class SearchPane<T> extends Pane {
 
     private HBox mainHBox;
@@ -75,6 +81,11 @@ public class SearchPane<T> extends Pane {
     private FilteredList<T> filteredList;
     private Map<Object, Predicate<T>> predicates;
     private Set<Function<T, String>> searchTextFunctions;
+    private Function<T, String> nameByFunction;
+    private Function<T, Node> popupFunction;
+    private Tooltip popup; // One popup for all list view cells for better performance
+    private PopupBuilder popupBuilder;
+    private PopupNodeHolder popupNodeHolder;
     private Map<String, T> stringConverterMap;
 
     public SearchPane() {
@@ -107,6 +118,7 @@ public class SearchPane<T> extends Pane {
     }
 
     public void setNameBy(Function<T, String> function) {
+        nameByFunction = function;
         stringConverterMap = new HashMap<>();
         for (T t : filteredList) {
             String name = function.apply(t);
@@ -121,29 +133,18 @@ public class SearchPane<T> extends Pane {
             }
             stringConverterMap.put(name, t);
         }
-        listView.setCellFactory(lv -> {
-            TextFieldListCell<T> cell = new TextFieldListCell<T>();
-            cell.setConverter(new StringConverter<T>() {
-                @Override
-                public String toString(T t) {
-                    if (t == null) {
-                        return "";
-                    }
-                    return stringConverterMap.entrySet().stream()
-                            .filter(entry -> entry.getValue() == t)
-                            .map(Map.Entry::getKey)
-                            .findFirst()
-                            .orElse("");
-                }
-
-                @Override
-                public T fromString(String s) {
-                    return stringConverterMap.get(s);
-                }
-            });
-            return cell;
-        });
+        updateCellFactory();
     }
+
+    public void setPopupFunction(Function<T, Node> function) {
+        if (popup == null) {
+            popup = new Tooltip();
+        }
+        popupFunction = function;
+        popupNodeHolder = null;
+        updateCellFactory();
+    }
+
 
     public void addSearchOption(Control control, Function<T, ?> getter) {
         predicates.put(control, (t) -> {
@@ -292,8 +293,8 @@ public class SearchPane<T> extends Pane {
         functionMap.forEach((key, value) -> {
             try {
                 addSearchOption(key, value);
+            } catch (IllegalArgumentException ignore) {
             }
-            catch (IllegalArgumentException ignore) {}
         });
     }
 
@@ -354,6 +355,13 @@ public class SearchPane<T> extends Pane {
         }
     }
 
+    public PopupBuilder popupBuilder() {
+        if (popupBuilder == null) {
+            popupBuilder = new PopupBuilder();
+        }
+        return popupBuilder;
+    }
+
     private void initTextSearch() {
         searchTextField.textProperty().addListener((observableValue, oldV, newV) -> {
             predicates.put(searchTextField, t -> searchTextFunctions.stream()
@@ -362,8 +370,164 @@ public class SearchPane<T> extends Pane {
         });
     }
 
+
     private void updateSearch() {
         filteredList.setPredicate(e -> predicates.values().stream()
                 .allMatch(tPredicate -> tPredicate.test(e)));
+    }
+
+    void updateCellFactory() {
+        listView.setCellFactory(lv -> {
+            TextFieldListCell<T> cell = new TextFieldListCell<T>();
+            // set name by:
+            if (nameByFunction != null) {
+                cell.setConverter(new StringConverter<T>() {
+                    @Override
+                    public String toString(T t) {
+                        if (t == null) {
+                            return "";
+                        }
+                        return stringConverterMap.entrySet().stream()
+                                .filter(entry -> entry.getValue() == t)
+                                .map(Map.Entry::getKey)
+                                .findFirst()
+                                .orElse("");
+                    }
+
+                    @Override
+                    public T fromString(String s) {
+                        return stringConverterMap.get(s);
+                    }
+                });
+            }
+            // set popup:
+            if ((popupFunction != null || popupNodeHolder != null) && popup != null) {
+                cell.hoverProperty().addListener((observableValue, oldV, newV) -> {
+                    if (newV && !cell.isEmpty()) {
+                        showPopup(cell);
+                    } else {
+                        hidePopup();
+                    }
+                });
+            }
+            return cell;
+        });
+    }
+
+    private void showPopup(TextFieldListCell<T> cell) {
+        if (popupFunction != null) {
+            Node popupNode = popupFunction.apply(cell.getItem());
+            popup.setGraphic(popupNode);
+        }
+        else if (popupNodeHolder != null) {
+            popupNodeHolder.applyToCell(cell);
+        }
+        Bounds bounds = cell.localToScreen(cell.getBoundsInLocal());
+        popup.show(cell, bounds.getMaxX(), bounds.getMinY());
+    }
+
+    private void hidePopup() {
+        popup.hide();
+    }
+
+
+    private class PopupNodeHolder extends AnchorPane {
+
+        private Map<Label, Function<T, String>> textFunctions;
+        private Map<Node, Function<T, Node>> nodeFunctions;
+        private VBox vBox;
+
+        PopupNodeHolder(VBox builderBox, Map<Label, Function<T, String>> textFunctions, Map<Node, Function<T, Node>> nodeFunctions) {
+            getChildren().add(builderBox);
+            vBox = builderBox;
+            this.textFunctions = textFunctions;
+            this.nodeFunctions = new ConcurrentHashMap<>(nodeFunctions);
+            popup = new Tooltip();
+            popup.setGraphic(this);
+            popupFunction = null;
+        }
+
+        void applyToCell(TextFieldListCell<T> cell) {
+            textFunctions.forEach((label, function) -> label.setText(function.apply(cell.getItem())));
+            nodeFunctions.forEach((node, function) -> {
+                Node newNode = function.apply(cell.getItem());
+                int position = vBox.getChildren().indexOf(node);
+                vBox.getChildren().remove(node);
+                vBox.getChildren().add(position, newNode);
+                nodeFunctions.remove(node);
+                nodeFunctions.put(newNode, function);
+            });
+        }
+
+    }
+
+    public class PopupBuilder {
+
+        private VBox mainVBox;
+        private Map<Label, Function<T, String>> textFunctions;
+        private Map<Node, Function<T, Node>> nodeFunctions;
+        private String textStyle;
+
+
+        PopupBuilder() {
+            this.mainVBox = new VBox();
+            this.mainVBox.setAlignment(Pos.CENTER);
+            textFunctions = new HashMap<>();
+            nodeFunctions = new HashMap<>();
+        }
+
+        public PopupBuilder addText(String text) {
+            Label label = new Label(text);
+            if (textStyle != null && !textStyle.isEmpty()) {
+                label.setStyle(textStyle);
+            }
+            mainVBox.getChildren().add(label);
+            return this;
+        }
+
+        public PopupBuilder addText(Label label) {
+            mainVBox.getChildren().add(label);
+            return this;
+        }
+
+        public PopupBuilder addText(Function<T, String> function) {
+            Label label = new Label();
+            if (textStyle != null && !textStyle.isEmpty()) {
+                label.setStyle(textStyle);
+            }
+            textFunctions.put(label, function);
+            mainVBox.getChildren().add(label);
+            return this;
+        }
+
+        public PopupBuilder addNode(Node node) {
+            mainVBox.getChildren().add(node);
+            return this;
+        }
+
+        public PopupBuilder addNode(Function<T, Node> function) {
+            Node placeHolder = new AnchorPane();
+            nodeFunctions.put(placeHolder, function);
+            mainVBox.getChildren().add(placeHolder);
+            return this;
+        }
+
+        public void apply() {
+            popupNodeHolder = new PopupNodeHolder(this.mainVBox, this.textFunctions, this.nodeFunctions);
+            updateCellFactory();
+        }
+
+        public PopupBuilder clear() {
+            SearchPane.this.popupBuilder = new PopupBuilder();
+            return this;
+        }
+
+        public void setStyle(String value) {
+            mainVBox.setStyle(value);
+        }
+
+        public void setTextStyle(String textStyle) {
+            this.textStyle = textStyle;
+        }
     }
 }

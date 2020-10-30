@@ -2,10 +2,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Control;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import ru.rdude.fxlib.boxes.SearchComboBox;
@@ -77,6 +74,13 @@ public class Main extends Application {
         functionMap.put(SearchPane::getSearchTextField, TestClass::getName);
         container.setExtendedSearchOptionsNode(SearchPane.class);
         container.setExtendedSearchOptions(functionMap);
+        container.extendedSearchPopupBuilder()
+                .addText("Test String")
+                .addText(TestClass::getName)
+                .addText(new Label("Label text"))
+                .addNode(TestClass::getLabel)
+                .apply();
+
 
 /*
  *                first option - collection of the second value Search Combo Box (Collection);
@@ -103,6 +107,13 @@ public class Main extends Application {
         searchPane.setTextFieldSearchBy(TestClass::getName, (t) -> String.valueOf(t.getValue()));
         searchPane.setNameBy(TestClass::getName);
         searchPane.addSearchOptions(map);
+        searchPane.popupBuilder()
+                .addText("Test string")
+                .addText(new Label("Test label"))
+                .addText(TestClass::getName)
+                .addNode(new Label("test static node"))
+                .addNode(TestClass::getLabel)
+                .apply();
 
 
         HBox hBox = new HBox(container, vBox, searchComboBox, searchPane, textField, radioButton);
@@ -119,6 +130,7 @@ public class Main extends Application {
         private boolean isTrue;
         private TextField textField;
         private List<String> collection;
+        private Label label;
 
         public TestClass(String name, int value, boolean isTrue) {
             this.name = name;
@@ -126,6 +138,7 @@ public class Main extends Application {
             this.isTrue = isTrue;
             textField = new TextField();
             collection = List.of("One", "fourth");
+            label = new Label("Label inside test class");
         }
 
         public String getName() {
@@ -174,6 +187,14 @@ public class Main extends Application {
 
         public void setCollection(List<String> collection) {
             this.collection = collection;
+        }
+
+        public Label getLabel() {
+            return label;
+        }
+
+        public void setLabel(Label label) {
+            this.label = label;
         }
     }
 }
