@@ -60,7 +60,7 @@ public class Main extends Application {
         searchComboBox.setSearchBy(TestClass::getName, testClass -> String.valueOf(testClass.getValue()));
 
         MultipleChoiceContainerExtended<TestClass, SearchPane> container = new MultipleChoiceContainerExtended<>(testClassList);
-        container.setNodeElementType(MultipleChoiceContainerElementTwoChoice.class);
+        container.setNodeElementType(MultipleChoiceContainerElementTwoChoiceWithPercents.class);
         MultipleChoiceContainerElementTwoChoice.ExtendedOptionsBuilder<TestClass, SearchPane> optionsBuilder = MultipleChoiceContainerElementTwoChoice.extendedOptionsBuilder();
         optionsBuilder.setCollection(testClassList)
                 .setNameByFunction(TestClass::getName)

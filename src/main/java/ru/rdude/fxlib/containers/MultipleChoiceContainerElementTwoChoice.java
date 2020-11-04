@@ -69,7 +69,7 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
             secondValueSearchDialog = new SearchDialog<>((Collection<V>) options[0]);
             secondValueSearchButton = new Button("...");
             secondValueSearchButton.setOnAction(action -> secondValueSearchDialog.showAndWait().ifPresent(v -> secondValueComboBox.setValue(v)));
-            getChildren().add(getChildren().size() - 2, secondValueSearchButton);
+            getChildren().add(getChildren().indexOf(secondValueComboBox) + 1, secondValueSearchButton);
             secondValueSearchDialog.getSearchPane().setNameBy((Function<V, String>) options[1]);
             if (options[2] instanceof Function) {
                 secondValueSearchDialog.getSearchPane().setTextFieldSearchBy((Function<V, String>) options[2]);

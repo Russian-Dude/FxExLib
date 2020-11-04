@@ -28,7 +28,9 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
         WITH_TEXT_FIELD(MultipleChoiceContainerElementWithTextField.class),
         WITH_AUTOFILL_TEXT_FIELD(MultipleChoiceContainerElementWithAutofillTextField.class),
         PERCENT_TEXT_FIELD(MultipleChoiceContainerElementWithPercents.class),
-        WITH_TWO_VALUES(MultipleChoiceContainerElementTwoChoice.class);
+        WITH_TWO_VALUES(MultipleChoiceContainerElementTwoChoice.class),
+        WITH_TWO_VALUES_AND_TEXT_FIELD(MultipleChoiceContainerElementTwoChoiceWithTextField.class),
+        WITH_TWO_VALUES_AND_PERCENTS(MultipleChoiceContainerElementTwoChoiceWithPercents.class);
 
         private final Class<? extends MultipleChoiceContainerElement> cl;
 
