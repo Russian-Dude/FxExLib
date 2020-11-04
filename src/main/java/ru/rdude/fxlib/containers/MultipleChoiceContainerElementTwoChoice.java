@@ -110,6 +110,10 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
         return secondValueComboBox.getValue();
     }
 
+    public void setSecondValue(V value) {
+        secondValueComboBox.setValue(value);
+    }
+
     public static <R, C> ExtendedOptionsBuilder<R, C> extendedOptionsBuilder() {
         return new ExtendedOptionsBuilder<>();
     }
