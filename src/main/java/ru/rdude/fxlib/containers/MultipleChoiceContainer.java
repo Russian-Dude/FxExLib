@@ -1,5 +1,7 @@
 package ru.rdude.fxlib.containers;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
@@ -12,7 +14,7 @@ import java.util.stream.Collectors;
 /**
  * Uses to contain multiple elements of provided collection.
  * New elements can be dynamically added and deleted from this container.
- * Type of the node that represent chosen element can be set as class extended from MultipleChoiceContainerElement.
+ * Type of the node that visually represent chosen element can be set as class extended from MultipleChoiceContainerElement.
  *
  * @param <T> type of the elements.
  */
@@ -28,7 +30,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
         PERCENT_TEXT_FIELD(MultipleChoiceContainerElementWithPercents.class),
         WITH_TWO_VALUES(MultipleChoiceContainerElementTwoChoice.class);
 
-        private Class<? extends MultipleChoiceContainerElement> cl;
+        private final Class<? extends MultipleChoiceContainerElement> cl;
 
         VisualElementType(Class<? extends MultipleChoiceContainerElement> cl) {
             this.cl = cl;
@@ -50,7 +52,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
      * Collection of the elements every added visual node can chose from.
      * If collection is empty no visual nodes can be added.
      */
-    protected Collection<T> availableElements;
+    protected ObservableList<T> availableElements;
     /**
      * Button to add new visual node representing element.
      */
@@ -87,13 +89,18 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
 
     /**
      * Constructor with provided elements to chose from.
-     *
+     * Use observable list to let this container dynamically update available elements.
      * @param availableElements elements to chose from. If empty no visual nodes can be added.
      */
     public MultipleChoiceContainer(Collection<T> availableElements) {
         super();
         visualElementType = VisualElementType.BASIC;
-        this.availableElements = availableElements;
+        if (availableElements instanceof ObservableList) {
+            this.availableElements = (ObservableList<T>) availableElements;
+        }
+        else {
+            this.availableElements = FXCollections.observableList(new ArrayList<>(availableElements));
+        }
         vBox = new VBox();
         addButton = new Button("+");
         elementType = MultipleChoiceContainerElement.class;
@@ -138,11 +145,16 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
 
     /**
      * Set available elements to chose from.
-     *
+     * Use observable list to let this container dynamically update available elements.
      * @param availableElements elements to chose from. If empty no visual nodes can be added.
      */
     public void setAvailableElements(Collection<T> availableElements) {
-        this.availableElements = availableElements;
+        if (availableElements instanceof ObservableList) {
+            this.availableElements = (ObservableList<T>) availableElements;
+        }
+        else {
+            this.availableElements = FXCollections.observableList(new ArrayList<>(availableElements));
+        }
         getNodesElements().forEach(element -> element.setElements(availableElements));
     }
 

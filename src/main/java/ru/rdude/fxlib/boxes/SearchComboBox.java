@@ -45,7 +45,12 @@ public class SearchComboBox<T> extends ComboBox<T> {
     }
 
     public void setCollection(Collection<T> collection) {
-        filteredList = new FilteredList<>(FXCollections.observableList(new ArrayList<>(collection)));
+        if (collection instanceof ObservableList) {
+            filteredList = new FilteredList<>((ObservableList<T>) collection);
+        }
+        else {
+            filteredList = new FilteredList<>(FXCollections.observableList(new ArrayList<>(collection)));
+        }
         setItems(filteredList);
     }
 

@@ -1,6 +1,7 @@
 package ru.rdude.fxlib.panes;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
@@ -94,7 +95,12 @@ public class SearchPane<T> extends Pane {
 
     public SearchPane(Collection<T> collection) {
         super();
-        filteredList = new FilteredList<>(FXCollections.observableList(new ArrayList<>(collection)));
+        if (collection instanceof ObservableList) {
+            filteredList = new FilteredList<>((ObservableList<T>) collection);
+        }
+        else {
+            filteredList = new FilteredList<>(FXCollections.observableList(new ArrayList<>(collection)));
+        }
         listView = new ListView<>(filteredList);
         predicates = new HashMap<>();
         searchTextField = new TextField();
@@ -299,7 +305,12 @@ public class SearchPane<T> extends Pane {
     }
 
     public void setCollection(Collection<T> collection) {
-        this.filteredList = new FilteredList<>(FXCollections.observableList(new ArrayList<>(collection)));
+        if (collection instanceof ObservableList) {
+            filteredList = new FilteredList<>((ObservableList<T>) collection);
+        }
+        else {
+            filteredList = new FilteredList<>(FXCollections.observableList(new ArrayList<>(collection)));
+        }
         listView.setItems(filteredList);
     }
 

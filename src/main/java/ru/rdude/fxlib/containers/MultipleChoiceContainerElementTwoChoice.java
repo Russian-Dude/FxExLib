@@ -1,5 +1,7 @@
 package ru.rdude.fxlib.containers;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -117,7 +119,7 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
      */
     public static class ExtendedOptionsBuilder<T, C> {
 
-        private Collection<T> collection;
+        private ObservableList<T> collection;
         private Function<T, String> nameByFunction;
         private Function<T, String> searchByFunction;
         private FXMLLoader extendedSearchNodeLoader;
@@ -129,7 +131,12 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
         }
 
         public S2 setCollection(Collection<T> collection) {
-            this.collection = collection;
+            if (collection instanceof ObservableList) {
+                this.collection = (ObservableList<T>) collection;
+            }
+            else {
+                this.collection = FXCollections.observableList(new ArrayList<>(collection));
+            }
             return new S2();
         }
 
