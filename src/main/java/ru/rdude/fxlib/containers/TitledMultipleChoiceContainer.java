@@ -2,10 +2,8 @@ package ru.rdude.fxlib.containers;
 
 import javafx.scene.control.TitledPane;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * This is extension to MultipleChoiceContainer class.
@@ -115,6 +113,10 @@ public class TitledMultipleChoiceContainer<T> extends TitledPane {
         return multipleChoiceContainer.getElements();
     }
 
+    public List<T> getValue() {
+        return multipleChoiceContainer.getValue();
+    }
+
     /**
      * Get visual nodes of this selected elements. To get only elements use getElements method.
      * @return list of visual nodes for each element. Every node is MultipleChoiceContainerElement type or
@@ -154,12 +156,33 @@ public class TitledMultipleChoiceContainer<T> extends TitledPane {
         return multipleChoiceContainer.addElement(index, element);
     }
 
+    public Object[] getExtendedOptions() {
+        return multipleChoiceContainer.getExtendedOptions();
+    }
+
+    public void setExtendedOptions(Object... extendedOptions) {
+        multipleChoiceContainer.setExtendedOptions(extendedOptions);
+    }
+
     /**
      * Set visual node type that represent element.
      * @param elementType class extended MultipleChoiceContainerElement
      */
     public void setNodeElementType(Class<? extends MultipleChoiceContainerElement> elementType) {
         multipleChoiceContainer.setNodeElementType(elementType);
+    }
+
+    @SafeVarargs
+    public final void setSearchBy(Function<T, String>... elementsSearchFunctions) {
+        multipleChoiceContainer.setSearchBy(elementsSearchFunctions);
+    }
+
+    public void setSearchBy(Set<Function<T, String>> elementsSearchFunctions) {
+        multipleChoiceContainer.setSearchBy(elementsSearchFunctions);
+    }
+
+    public void setNameBy(Function<T, String> elementsNameFunction) {
+        multipleChoiceContainer.setNameBy(elementsNameFunction);
     }
 
     public void setTitle(String title) {
