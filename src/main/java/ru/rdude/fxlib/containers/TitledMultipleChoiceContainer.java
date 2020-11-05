@@ -51,10 +51,10 @@ public class TitledMultipleChoiceContainer<T> extends TitledPane {
         setText(title);
         expandedProperty().addListener((observable, oldV, newV) -> {
             if (!newV && showElementsCount && getNodesElements().size() > 0) {
-                setText(title + " (" + getNodesElements().size() + ")");
+                setText(this.title + " (" + getNodesElements().size() + ")");
             }
             else {
-                setText(title);
+                setText(this.title);
             }
         });
     }
