@@ -161,4 +161,9 @@ public class TitledMultipleChoiceContainer<T> extends TitledPane {
     public void setNodeElementType(Class<? extends MultipleChoiceContainerElement> elementType) {
         multipleChoiceContainer.setNodeElementType(elementType);
     }
+
+    public void setTitle(String title) {
+        this.title = title;
+        setText(title);
+    }
 }

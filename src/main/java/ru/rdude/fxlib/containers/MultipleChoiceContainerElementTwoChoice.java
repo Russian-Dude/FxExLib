@@ -6,6 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Control;
+import javafx.scene.layout.Priority;
 import ru.rdude.fxlib.boxes.SearchComboBox;
 
 import java.util.ArrayList;
@@ -34,6 +35,8 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
     public MultipleChoiceContainerElementTwoChoice(Collection<T> collection) {
         super(collection);
         secondValueComboBox = new SearchComboBox<>();
+        secondValueComboBox.setMaxWidth(Double.MAX_VALUE);
+        setHgrow(secondValueComboBox, Priority.ALWAYS);
         getChildren().add(1, secondValueComboBox);
     }
 
