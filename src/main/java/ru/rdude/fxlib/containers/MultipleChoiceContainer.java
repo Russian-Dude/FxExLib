@@ -2,13 +2,16 @@ package ru.rdude.fxlib.containers;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
+import ru.rdude.fxlib.boxes.SearchComboBox;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -54,7 +57,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
      * Collection of the elements every added visual node can chose from.
      * If collection is empty no visual nodes can be added.
      */
-    protected ObservableList<T> availableElements;
+    protected ObservableList<T> elements;
     /**
      * Button to add new visual node representing element.
      */
@@ -80,6 +83,14 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
      * If children elements need some extended option to initialize when created this is used.
      */
     private Object[] extendedOptions;
+    /**
+     * If true only one copy of each element available to chose from
+     */
+    private boolean uniqueElements;
+    /**
+     * If true elements value can not be null
+     */
+    private boolean notNull;
 
 
     /**
@@ -92,17 +103,19 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
     /**
      * Constructor with provided elements to chose from.
      * Use observable list to let this container dynamically update available elements.
-     * @param availableElements elements to chose from. If empty no visual nodes can be added.
+     *
+     * @param elements elements to chose from. If empty no visual nodes can be added.
      */
-    public MultipleChoiceContainer(Collection<T> availableElements) {
+    public MultipleChoiceContainer(Collection<T> elements) {
         super();
         visualElementType = VisualElementType.BASIC;
-        if (availableElements instanceof ObservableList) {
-            this.availableElements = (ObservableList<T>) availableElements;
+        if (elements instanceof ObservableList) {
+            this.elements = (ObservableList<T>) elements;
+        } else {
+            this.elements = FXCollections.observableArrayList(elements);
         }
-        else {
-            this.availableElements = FXCollections.observableList(new ArrayList<>(availableElements));
-        }
+        setUniqueElements(false);
+        notNull = true;
         vBox = new VBox();
         addButton = new Button("+");
         elementType = MultipleChoiceContainerElement.class;
@@ -148,16 +161,16 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
     /**
      * Set available elements to chose from.
      * Use observable list to let this container dynamically update available elements.
-     * @param availableElements elements to chose from. If empty no visual nodes can be added.
+     *
+     * @param elements elements to chose from. If empty no visual nodes can be added.
      */
-    public void setAvailableElements(Collection<T> availableElements) {
-        if (availableElements instanceof ObservableList) {
-            this.availableElements = (ObservableList<T>) availableElements;
+    public void setElements(Collection<T> elements) {
+        if (elements instanceof ObservableList) {
+            this.elements = (ObservableList<T>) elements;
+        } else {
+            this.elements = FXCollections.observableArrayList(elements);
         }
-        else {
-            this.availableElements = FXCollections.observableList(new ArrayList<>(availableElements));
-        }
-        getNodesElements().forEach(element -> element.setElements(availableElements));
+        getNodesElements().forEach(element -> element.setElements(elements));
     }
 
     /**
@@ -199,9 +212,20 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
      * @return Optional of new visual node element.
      */
     public Optional<MultipleChoiceContainerElement<T>> addElement() {
-        return availableElements.stream()
-                .findFirst()
-                .map(this::addElement);
+        return !notNull ? Optional.ofNullable(addElement(null)) :
+                elements.stream()
+                        .filter(t -> {
+                            if (uniqueElements) {
+                                return getNodesElements()
+                                        .stream()
+                                        .map(MultipleChoiceContainerElement::getSelectedElement)
+                                        .allMatch(v -> v != t);
+                            } else {
+                                return true;
+                            }
+                        })
+                        .findFirst()
+                        .map(this::addElement);
     }
 
     /**
@@ -223,16 +247,43 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
      */
     public MultipleChoiceContainerElement<T> addElement(int index, T element) {
         try {
-            MultipleChoiceContainerElement<T> containerElement = elementType.getDeclaredConstructor(Collection.class).newInstance(availableElements);
+            MultipleChoiceContainerElement<T> containerElement = elementType.getDeclaredConstructor(Collection.class).newInstance(elements);
+
+            // search functions
             if (elementsSearchFunctions != null) {
                 containerElement.getComboBoxNode().setSearchBy(elementsSearchFunctions);
+                containerElement.getSearchDialog().getSearchPane().setTextFieldSearchBy(elementsSearchFunctions);
             }
+
+            // name function
             if (elementsNameFunction != null) {
                 containerElement.getComboBoxNode().setNameBy(elementsNameFunction);
+                containerElement.getSearchDialog().getSearchPane().setNameBy(elementsNameFunction);
             }
-            if (extendedOptions != null) {
-                containerElement.setExtendedOptions(extendedOptions);
-            }
+
+            // not null option
+            containerElement.getComboBoxNode().valueProperty().addListener((observableValue, oldV, newV) -> {
+                if (isElementsNotNull() && newV == null) {
+                    containerElement.setSelectedElement(oldV);
+                }
+            });
+
+            // unique elements option
+            containerElement.getComboBoxNode().showingProperty().addListener((observableValue, oldV, newV) -> {
+                if (isUniqueElements() && newV != oldV) {
+                    T oldValue = containerElement.getSelectedElement();
+                    if (newV) {
+                        FilteredList<T> subFilteredList = new FilteredList<>(elements, createUniqueElementsPredicate(containerElement));
+                        SearchComboBox<T> comboBoxNode = containerElement.getComboBoxNode();
+                        comboBoxNode.setCollection(subFilteredList);
+                        // because listeners work in order need to set prompt and text again (search combo box did it already thou)
+                        comboBoxNode.setPromptText(comboBoxNode.getConverter().toString(oldValue));
+                        comboBoxNode.getEditor().setText("");
+                    }
+                }
+            });
+
+            // creating result container element
             containerElement.setSelectedElement(element);
             vBox.getChildren().add(index, containerElement);
             return containerElement;
@@ -269,5 +320,26 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
 
     public void setNameBy(Function<T, String> elementsNameFunction) {
         this.elementsNameFunction = elementsNameFunction;
+    }
+
+    public boolean isUniqueElements() {
+        return uniqueElements;
+    }
+
+    public void setUniqueElements(boolean value) {
+        this.uniqueElements = value;
+    }
+
+    public boolean isElementsNotNull() {
+        return notNull;
+    }
+
+    public void setElementsNotNull(boolean value) {
+        this.notNull = value;
+    }
+
+    protected Predicate<T> createUniqueElementsPredicate(MultipleChoiceContainerElement<T> keep) {
+        return t -> (keep != null && keep.getSelectedElement() == t)
+                || getNodesElements().stream().allMatch(nodeElement -> nodeElement.getSelectedElement() != t);
     }
 }

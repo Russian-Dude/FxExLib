@@ -101,7 +101,7 @@ public class TitledMultipleChoiceContainer<T> extends TitledPane {
      * @param availableElements elements to chose from. If empty no visual nodes can be added.
      */
     public void setAvailableElements(Collection<T> availableElements) {
-        multipleChoiceContainer.setAvailableElements(availableElements);
+        multipleChoiceContainer.setElements(availableElements);
     }
 
     /**

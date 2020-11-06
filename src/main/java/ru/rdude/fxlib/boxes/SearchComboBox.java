@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.util.StringConverter;
@@ -134,6 +135,7 @@ public class SearchComboBox<T> extends ComboBox<T> {
             if (newV) {
                 setEditable(true);
                 filteredList.setPredicate(e -> true);
+                setPromptText(getConverter().toString(getValue()));
                 getEditor().setText("");
             } else {
                 setEditable(false);

@@ -59,7 +59,7 @@ public class Main extends Application {
         searchComboBox.setNameAndSearchBy(TestClass::getName);
         searchComboBox.setSearchBy(TestClass::getName, testClass -> String.valueOf(testClass.getValue()));
 
-        MultipleChoiceContainerExtended<TestClass, SearchPane> container = new MultipleChoiceContainerExtended<>(testClassList);
+        MultipleChoiceContainerExtended<TestEnum, SearchPane> container = new MultipleChoiceContainerExtended<>(List.of(TestEnum.values()));
         container.setNodeElementType(MultipleChoiceContainerElementTwoChoiceWithPercents.class);
         MultipleChoiceContainerElementTwoChoice.ExtendedOptionsBuilder<TestClass, SearchPane> optionsBuilder = MultipleChoiceContainerElementTwoChoice.extendedOptionsBuilder();
         optionsBuilder.setCollection(testClassList)
@@ -68,18 +68,9 @@ public class Main extends Application {
                 .setExtendedSearchNode(SearchPane.class)
                 .addExtendedSearchFunction(SearchPane::getSearchTextField, TestClass::getName);
         container.setExtendedOptions(optionsBuilder);
-        container.setNameBy(TestClass::getName);
-        container.setSearchBy(TestClass::getName);
-        Map<Function<SearchPane, Control>, Function<TestClass, ?>> functionMap = new HashMap<>();
-        functionMap.put(SearchPane::getSearchTextField, TestClass::getName);
-        container.setExtendedSearchOptionsNode(SearchPane.class);
-        container.setExtendedSearchOptions(functionMap);
-        container.extendedSearchPopupBuilder()
-                .addText("Test String")
-                .addText(TestClass::getName)
-                .addText(new Label("Label text"))
-                .addNode(TestClass::getLabel)
-                .apply();
+        container.setNameBy(TestEnum::name);
+        container.setSearchBy(TestEnum::name);
+        container.setUniqueElements(true);
 
 
 /*
@@ -122,6 +113,8 @@ public class Main extends Application {
 
         mainPane.getChildren().add(hBox);
     }
+
+    enum TestEnum { ONE, TWO, THREE, FOUR, FIVE }
 
     class TestClass {
         private String name;

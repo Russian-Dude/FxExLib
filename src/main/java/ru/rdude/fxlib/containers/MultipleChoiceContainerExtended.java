@@ -1,10 +1,12 @@
 package ru.rdude.fxlib.containers;
 
+import javafx.collections.transformation.FilteredList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.util.StringConverter;
+import ru.rdude.fxlib.boxes.SearchComboBox;
 import ru.rdude.fxlib.panes.SearchPane;
 
 import java.io.IOException;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
  * Extended version of MultipleChoiceContainer to use with big amount of available elements.
  * Every element of this container has Search Dialog that helps to find elements with filters.
  * This search dialog can be customised by with linking Control nodes getters with element's class getters.
+ *
  * @param <T> type of the elements in container.
  * @param <C> controller type.
  */
@@ -70,15 +73,48 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
     @Override
     public MultipleChoiceContainerElement<T> addElement(int index, T element) {
         try {
-            MultipleChoiceContainerElement<T> containerElement = elementType.getDeclaredConstructor(Collection.class).newInstance(availableElements);
+            MultipleChoiceContainerElement<T> containerElement = elementType.getDeclaredConstructor(Collection.class).newInstance(elements);
+
+            // search functions
             if (elementsSearchFunctions != null) {
                 containerElement.getComboBoxNode().setSearchBy(elementsSearchFunctions);
                 containerElement.getSearchDialog().getSearchPane().setTextFieldSearchBy(elementsSearchFunctions);
             }
+
+            // name function
             if (elementsNameFunction != null) {
                 containerElement.getComboBoxNode().setNameBy(elementsNameFunction);
                 containerElement.getSearchDialog().getSearchPane().setNameBy(elementsNameFunction);
             }
+
+            // not null option
+            containerElement.getComboBoxNode().valueProperty().addListener((observableValue, oldV, newV) -> {
+                if (isElementsNotNull() && newV == null) {
+                    containerElement.setSelectedElement(oldV);
+                }
+            });
+
+            // unique elements option
+            containerElement.getComboBoxNode().showingProperty().addListener((observableValue, oldV, newV) -> {
+                if (isUniqueElements() && newV != oldV) {
+                    T oldValue = containerElement.getSelectedElement();
+                    if (newV) {
+                        FilteredList<T> subFilteredList = new FilteredList<>(elements, createUniqueElementsPredicate(containerElement));
+                        SearchComboBox<T> comboBoxNode = containerElement.getComboBoxNode();
+                        comboBoxNode.setCollection(subFilteredList);
+                        // because listeners work in order need to set prompt and text again (search combo box did it already thou)
+                        comboBoxNode.setPromptText(comboBoxNode.getConverter().toString(oldValue));
+                        comboBoxNode.getEditor().setText("");
+                    }
+                }
+            });
+
+            // extended custom options
+            if (getExtendedOptions() != null) {
+                containerElement.setExtendedOptions(getExtendedOptions());
+            }
+
+            // extended search
             containerElement.setExtendedSearch(true);
             Node extraSearchNode = null;
             C controller = null;
@@ -89,8 +125,7 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
                 } catch (IOException e) {
                     throw new IllegalStateException("Loader was not set properly.");
                 }
-            }
-            else if (extendedSearchExtraNodeClass != null) {
+            } else if (extendedSearchExtraNodeClass != null) {
                 extraSearchNode = extendedSearchExtraNodeClass.getDeclaredConstructor().newInstance();
                 controller = (C) extraSearchNode;
             }
@@ -101,17 +136,17 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
                         elementsSearchExtendedFunctions.entrySet().stream()
                                 .collect(Collectors.toMap(entry -> entry.getKey().apply(finalController), Map.Entry::getValue, (a, b) -> a, HashMap::new)));
             }
-            if (getExtendedOptions() != null) {
-                containerElement.setExtendedOptions(getExtendedOptions());
-            }
+
+            // extended search popup
             if (extendedSearchPopupFunction != null) {
                 containerElement.getSearchDialog().getSearchPane().setPopupFunction(extendedSearchPopupFunction);
-            }
-            else if (popupBuilder != null) {
+            } else if (popupBuilder != null) {
                 SearchPane<T>.PopupBuilder searchPanePopupBuilder = containerElement.getSearchDialog().getSearchPane().popupBuilder();
                 popupBuilder.functions.forEach(function -> function.apply(searchPanePopupBuilder));
                 searchPanePopupBuilder.apply();
             }
+
+            // creating result container element
             containerElement.setSelectedElement(element);
             vBox.getChildren().add(index, containerElement);
             return containerElement;
