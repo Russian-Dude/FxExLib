@@ -84,8 +84,13 @@ public class Main extends Application {
         container2.setNodeElementType(MultipleChoiceContainerElementWithTextField.class);
         TitledMultipleChoiceContainer<TestClass> container3 = new TitledMultipleChoiceContainer<>(testClassList, "test node");
         container3.setNodeElementType(MultipleChoiceContainerElementWithAutofillTextField.class);
+        container3.setExtendedOptions(List.of("one", "two", "three", "four", "five"));
+
+        AutocomplitionTextField autocomplitionTextField = new AutocomplitionTextField();
+        autocomplitionTextField.setElements(List.of("one", "two", "three", "four", "five"));
+
         mainPane.setMinWidth(300);
-        VBox vBox = new VBox(container2, container3);
+        VBox vBox = new VBox(container2, container3, autocomplitionTextField);
 
         TextField textField = new TextField();
         RadioButton radioButton = new RadioButton("fourth");

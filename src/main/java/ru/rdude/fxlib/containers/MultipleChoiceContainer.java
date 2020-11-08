@@ -283,6 +283,11 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
                 }
             });
 
+            // extended custom options
+            if (getExtendedOptions() != null) {
+                containerElement.setExtendedOptions(getExtendedOptions());
+            }
+
             // creating result container element
             containerElement.setSelectedElement(element);
             vBox.getChildren().add(index, containerElement);

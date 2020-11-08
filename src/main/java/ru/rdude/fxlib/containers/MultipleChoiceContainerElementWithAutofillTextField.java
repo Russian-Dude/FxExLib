@@ -15,7 +15,10 @@ public class MultipleChoiceContainerElementWithAutofillTextField<T> extends Mult
 
     public MultipleChoiceContainerElementWithAutofillTextField(Collection<T> collection) {
         super(collection);
+        int simpleTextFieldPosition = getChildren().indexOf(textField);
+        getChildren().remove(textField);
         textField = new AutocomplitionTextField();
+        getChildren().add(simpleTextFieldPosition, textField);
     }
 
     public void setAutocomplitionElements(Collection<String> collection) {

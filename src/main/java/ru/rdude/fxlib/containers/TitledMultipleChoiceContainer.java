@@ -98,6 +98,16 @@ public class TitledMultipleChoiceContainer<T> extends TitledPane {
 
     /**
      * Set available elements to chose from.
+     * Use observable list to let this container dynamically update available elements.
+     *
+     * @param elements elements to chose from. If empty no visual nodes can be added.
+     */
+    public void setElements(Collection<T> elements) {
+        multipleChoiceContainer.setElements(elements);
+    }
+
+    /**
+     * Set available elements to chose from.
      * @param availableElements elements to chose from. If empty no visual nodes can be added.
      */
     public void setAvailableElements(Collection<T> availableElements) {
@@ -183,6 +193,22 @@ public class TitledMultipleChoiceContainer<T> extends TitledPane {
 
     public void setNameBy(Function<T, String> elementsNameFunction) {
         multipleChoiceContainer.setNameBy(elementsNameFunction);
+    }
+
+    public boolean isUniqueElements() {
+        return multipleChoiceContainer.isUniqueElements();
+    }
+
+    public void setUniqueElements(boolean value) {
+        multipleChoiceContainer.setUniqueElements(value);
+    }
+
+    public boolean isElementsNotNull() {
+        return multipleChoiceContainer.isElementsNotNull();
+    }
+
+    public void setElementsNotNull(boolean value) {
+        multipleChoiceContainer.setElementsNotNull(value);
     }
 
     public void setTitle(String title) {
