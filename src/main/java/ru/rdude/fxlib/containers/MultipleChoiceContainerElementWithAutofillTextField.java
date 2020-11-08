@@ -1,6 +1,6 @@
 package ru.rdude.fxlib.containers;
 
-import ru.rdude.fxlib.textfields.AutocomplitionTextField;
+import ru.rdude.fxlib.textfields.AutocomplitionTextFieldSimple;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,12 +17,12 @@ public class MultipleChoiceContainerElementWithAutofillTextField<T> extends Mult
         super(collection);
         int simpleTextFieldPosition = getChildren().indexOf(textField);
         getChildren().remove(textField);
-        textField = new AutocomplitionTextField();
+        textField = new AutocomplitionTextFieldSimple();
         getChildren().add(simpleTextFieldPosition, textField);
     }
 
     public void setAutocomplitionElements(Collection<String> collection) {
-        ((AutocomplitionTextField) textField).setElements(collection);
+        ((AutocomplitionTextFieldSimple) textField).setElements(collection);
     }
 
     @Override
@@ -34,6 +34,6 @@ public class MultipleChoiceContainerElementWithAutofillTextField<T> extends Mult
             }
             collection.addAll((Collection<? extends String>) option);
         }
-        ((AutocomplitionTextField) textField).setElements(collection);
+        ((AutocomplitionTextFieldSimple) textField).setElements(collection);
     }
 }

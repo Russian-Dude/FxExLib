@@ -1,6 +1,4 @@
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -9,6 +7,7 @@ import ru.rdude.fxlib.boxes.SearchComboBox;
 import ru.rdude.fxlib.containers.*;
 import ru.rdude.fxlib.panes.SearchPane;
 import ru.rdude.fxlib.textfields.AutocomplitionTextField;
+import ru.rdude.fxlib.textfields.AutocomplitionTextFieldSimple;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -86,8 +85,10 @@ public class Main extends Application {
         container3.setNodeElementType(MultipleChoiceContainerElementWithAutofillTextField.class);
         container3.setExtendedOptions(List.of("one", "two", "three", "four", "five"));
 
-        AutocomplitionTextField autocomplitionTextField = new AutocomplitionTextField();
-        autocomplitionTextField.setElements(List.of("one", "two", "three", "four", "five"));
+        AutocomplitionTextField<TestClass> autocomplitionTextField = new AutocomplitionTextField();
+        autocomplitionTextField.setElements(testClassList);
+        autocomplitionTextField.setItemNameFunction(TestClass::getName);
+        autocomplitionTextField.setExtendedDescriptionFunction(testClass -> testClass.getName().toUpperCase() + " test description");
 
         mainPane.setMinWidth(300);
         VBox vBox = new VBox(container2, container3, autocomplitionTextField);
