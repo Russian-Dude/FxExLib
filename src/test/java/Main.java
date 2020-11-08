@@ -7,7 +7,6 @@ import ru.rdude.fxlib.boxes.SearchComboBox;
 import ru.rdude.fxlib.containers.*;
 import ru.rdude.fxlib.panes.SearchPane;
 import ru.rdude.fxlib.textfields.AutocomplitionTextField;
-import ru.rdude.fxlib.textfields.AutocomplitionTextFieldSimple;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -83,7 +82,11 @@ public class Main extends Application {
         container2.setNodeElementType(MultipleChoiceContainerElementWithTextField.class);
         TitledMultipleChoiceContainer<TestClass> container3 = new TitledMultipleChoiceContainer<>(testClassList, "test node");
         container3.setNodeElementType(MultipleChoiceContainerElementWithAutofillTextField.class);
-        container3.setExtendedOptions(List.of("one", "two", "three", "four", "five"));
+        MultipleChoiceContainerElementWithAutofillTextField.AutocomplitionTextFieldBuilder<TestClass> builder = MultipleChoiceContainerElementWithAutofillTextField.builder();
+        builder.setCollection(testClassList)
+                .setExtendedDescriptionFunction(testClass -> testClass.getName() + " super test")
+                .setNameFunction(TestClass::getName);
+        container3.setExtendedOptions(builder);
 
         AutocomplitionTextField<TestClass> autocomplitionTextField = new AutocomplitionTextField();
         autocomplitionTextField.setElements(testClassList);

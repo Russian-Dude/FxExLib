@@ -197,7 +197,7 @@ public abstract class AutocomplitionTextFieldBase<T> extends TextField {
         ItemHolder(T t) {
             this.t = t;
             name = itemNameFunction.apply(t);
-            fullName = extendedDescriptionFunction == null ? name : name + "   (" + extendedDescriptionFunction.apply(t) + ")";
+            fullName = extendedDescriptionFunction == null ? name : name + " " + extendedDescriptionFunction.apply(t);
         }
     }
 

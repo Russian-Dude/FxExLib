@@ -29,6 +29,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
     public enum VisualElementType {
         BASIC(MultipleChoiceContainerElement.class),
         WITH_TEXT_FIELD(MultipleChoiceContainerElementWithTextField.class),
+        WITH_SIMPLE_AUTOFILL_TEXT_FIELD(MultipleChoiceContainerElementWithSimpleAutofillTextField.class),
         WITH_AUTOFILL_TEXT_FIELD(MultipleChoiceContainerElementWithAutofillTextField.class),
         PERCENT_TEXT_FIELD(MultipleChoiceContainerElementWithPercents.class),
         WITH_TWO_VALUES(MultipleChoiceContainerElementTwoChoice.class),
