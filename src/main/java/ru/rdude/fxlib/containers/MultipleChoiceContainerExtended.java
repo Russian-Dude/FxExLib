@@ -1,17 +1,17 @@
 package ru.rdude.fxlib.containers;
 
 import javafx.collections.transformation.FilteredList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.util.StringConverter;
+import javafx.scene.input.MouseEvent;
 import ru.rdude.fxlib.boxes.SearchComboBox;
 import ru.rdude.fxlib.panes.SearchPane;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -74,6 +74,24 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
     public MultipleChoiceContainerElement<T> addElement(int index, T element) {
         try {
             MultipleChoiceContainerElement<T> containerElement = elementType.getDeclaredConstructor(Collection.class).newInstance(elements);
+
+            // observe elements change
+            AtomicBoolean clicked = new AtomicBoolean(false);
+            containerElement.getComboBoxNode().addEventHandler(ComboBox.ON_HIDING, event -> {
+                clicked.set(false);
+            });
+            containerElement.getComboBoxNode().addEventHandler(ComboBox.ON_SHOWING, event -> {
+                clicked.set(false);
+            });
+            containerElement.getComboBoxNode().setOnMouseClicked(event -> {
+                clicked.set(true);
+            });
+            containerElement.getComboBoxNode().valueProperty().addListener((observableValue, oldV, newV) -> {
+                if (oldV != newV && clicked.get()) {
+                    selectedElements.remove(oldV);
+                    selectedElements.add(newV);
+                }
+            });
 
             // search functions
             if (elementsSearchFunctions != null) {

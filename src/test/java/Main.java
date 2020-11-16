@@ -1,4 +1,5 @@
 import javafx.application.Application;
+import javafx.collections.ListChangeListener;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -121,6 +122,12 @@ public class Main extends Application {
         container.setMaxSize(400d, 400d);
 
         mainPane.getChildren().add(hBox);
+
+        container.getElementsObservable().addListener((ListChangeListener<TestEnum>) change -> {
+            System.out.println(container.getElementsObservable());
+        });
+
+        container.setUniqueElements(false);
     }
 
     enum TestEnum { ONE, TWO, THREE, FOUR, FIVE }

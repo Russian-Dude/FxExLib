@@ -1,9 +1,11 @@
 package ru.rdude.fxlib.containers;
 
+import javafx.collections.ObservableList;
 import javafx.scene.control.TitledPane;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * This is extension to MultipleChoiceContainer class.
@@ -214,5 +216,13 @@ public class TitledMultipleChoiceContainer<T> extends TitledPane {
     public void setTitle(String title) {
         this.title = title;
         setText(title);
+    }
+
+    public ObservableList<T> getElementsObservable() {
+        return multipleChoiceContainer.getElementsObservable();
+    }
+
+    protected Predicate<T> createUniqueElementsPredicate(MultipleChoiceContainerElement<T> keep) {
+        return multipleChoiceContainer.createUniqueElementsPredicate(keep);
     }
 }

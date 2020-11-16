@@ -1,18 +1,24 @@
 package ru.rdude.fxlib.containers;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.collections.transformation.FilteredList;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import ru.rdude.fxlib.boxes.SearchComboBox;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Uses to contain multiple elements of provided collection.
@@ -87,11 +93,15 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
     /**
      * If true only one copy of each element available to chose from
      */
-    private boolean uniqueElements;
+    protected boolean uniqueElements;
     /**
      * If true elements value can not be null
      */
     private boolean notNull;
+    /**
+     * List of selected elements.
+     */
+    protected ObservableList<T> selectedElements;
 
 
     /**
@@ -129,6 +139,22 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
         vBox.setFillWidth(true);
         setFitToWidth(true);
         setContent(vBox);
+        // observe selected elements:
+        selectedElements = FXCollections.observableArrayList();
+        vBox.getChildren().addListener((ListChangeListener<Node>) change -> {
+            while (change.next()) {
+                if (change.wasAdded()) {
+                    change.getAddedSubList().stream()
+                            .filter(node -> node instanceof MultipleChoiceContainerElement)
+                            .forEach(node -> selectedElements.add(((MultipleChoiceContainerElement<T>) node).getSelectedElement()));
+                } else if (change.wasRemoved()) {
+                    change.getRemoved().stream()
+                            .filter(node -> node instanceof MultipleChoiceContainerElement)
+                            .map(node -> ((MultipleChoiceContainerElement<T>) node).getSelectedElement())
+                            .forEach(selectedElements::remove);
+                }
+            }
+        });
     }
 
     /**
@@ -186,6 +212,10 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
                 .collect(Collectors.toList());
     }
 
+    public ObservableList<T> getElementsObservable() {
+        return selectedElements;
+    }
+
     @Override
     public List<T> getValue() {
         return getElements();
@@ -205,6 +235,7 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
                 .map(child -> (MultipleChoiceContainerElement<T>) child)
                 .collect(Collectors.toList());
     }
+
 
     /**
      * Add new visual node element if collection of available elements is not empty and return Optional of this visual node.
@@ -249,6 +280,24 @@ public class MultipleChoiceContainer<T> extends ScrollPane implements ValueProvi
     public MultipleChoiceContainerElement<T> addElement(int index, T element) {
         try {
             MultipleChoiceContainerElement<T> containerElement = elementType.getDeclaredConstructor(Collection.class).newInstance(elements);
+
+            // observe elements change
+            AtomicBoolean clicked = new AtomicBoolean(false);
+            containerElement.getComboBoxNode().addEventHandler(ComboBox.ON_HIDING, event -> {
+                clicked.set(false);
+            });
+            containerElement.getComboBoxNode().addEventHandler(ComboBox.ON_SHOWING, event -> {
+                clicked.set(false);
+            });
+            containerElement.getComboBoxNode().setOnMouseClicked(event -> {
+                clicked.set(true);
+            });
+            containerElement.getComboBoxNode().valueProperty().addListener((observableValue, oldV, newV) -> {
+                if (oldV != newV && clicked.get()) {
+                    selectedElements.remove(oldV);
+                    selectedElements.add(newV);
+                }
+            });
 
             // search functions
             if (elementsSearchFunctions != null) {
