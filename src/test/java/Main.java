@@ -104,7 +104,8 @@ public class Main extends Application {
         map.put(textField, TestClass::getName);
         map.put(radioButton, TestClass::getCollection);
 
-        SearchPane<TestClass> searchPane = new SearchPane<>(testClassList);
+        SearchPane<TestClass> searchPane = new SearchPane<>();
+        searchPane.setCollection(testClassList);
         searchPane.setTextFieldSearchBy(TestClass::getName, (t) -> String.valueOf(t.getValue()));
         searchPane.setNameBy(TestClass::getName);
         searchPane.addSearchOptions(map);

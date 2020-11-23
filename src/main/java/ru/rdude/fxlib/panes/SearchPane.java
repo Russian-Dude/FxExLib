@@ -1,6 +1,7 @@
 package ru.rdude.fxlib.panes;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.EventType;
@@ -14,7 +15,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.HTMLEditor;
-import javafx.stage.Popup;
 import javafx.util.StringConverter;
 import ru.rdude.fxlib.containers.ValueProvider;
 
@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -95,10 +96,11 @@ public class SearchPane<T> extends Pane {
 
     public SearchPane(Collection<T> collection) {
         super();
-        if (collection instanceof ObservableList) {
+        if (collection instanceof FilteredList) {
+            filteredList = (FilteredList<T>) collection;
+        } else if (collection instanceof ObservableList) {
             filteredList = new FilteredList<>((ObservableList<T>) collection);
-        }
-        else {
+        } else {
             filteredList = new FilteredList<>(FXCollections.observableList(new ArrayList<>(collection)));
         }
         listView = new ListView<>(filteredList);
@@ -126,20 +128,45 @@ public class SearchPane<T> extends Pane {
     public void setNameBy(Function<T, String> function) {
         nameByFunction = function;
         stringConverterMap = new HashMap<>();
-        for (T t : filteredList) {
-            String name = function.apply(t);
-            if (stringConverterMap.containsKey(name)) {
-                String newName = name;
-                int sameNames = 0;
-                while (stringConverterMap.containsKey(newName)) {
-                    sameNames++;
-                    newName = name + " (" + sameNames + ")";
+        // listener for filtered list changes
+        filteredList.getSource().addListener((ListChangeListener<T>) change -> {
+            while (change.next()) {
+                if (change.wasAdded()) {
+                    change.getAddedSubList().forEach(t -> stringConverterMap.putIfAbsent(generateNameToByNameFunction(t), t));
+                } else if (change.wasRemoved()) {
+                    AtomicReference<String> lookingForName = new AtomicReference<>();
+                    change.getRemoved().forEach(t -> stringConverterMap.entrySet().stream()
+                            .filter(entry -> {
+                                if (entry.getValue() == t) {
+                                    lookingForName.set(entry.getKey());
+                                    return true;
+                                }
+                                return false;
+                            }).findFirst()
+                            .ifPresent(entry -> stringConverterMap.remove(lookingForName.get())));
                 }
-                name = newName;
             }
+        });
+        // update stringConverterMap with presented elements
+        for (T t : filteredList) {
+            String name = generateNameToByNameFunction(t);
             stringConverterMap.put(name, t);
         }
         updateCellFactory();
+    }
+
+    private String generateNameToByNameFunction(T t) {
+        String name = nameByFunction.apply(t);
+        if (stringConverterMap.containsKey(name)) {
+            String newName = name;
+            int sameNames = 0;
+            while (stringConverterMap.containsKey(newName)) {
+                sameNames++;
+                newName = name + " (" + sameNames + ")";
+            }
+            name = newName;
+        }
+        return name;
     }
 
     public void setPopupFunction(Function<T, Node> function) {
@@ -305,10 +332,11 @@ public class SearchPane<T> extends Pane {
     }
 
     public void setCollection(Collection<T> collection) {
-        if (collection instanceof ObservableList) {
+        if (collection instanceof FilteredList) {
+            filteredList = (FilteredList<T>) collection;
+        } else if (collection instanceof ObservableList) {
             filteredList = new FilteredList<>((ObservableList<T>) collection);
-        }
-        else {
+        } else {
             filteredList = new FilteredList<>(FXCollections.observableList(new ArrayList<>(collection)));
         }
         listView.setItems(filteredList);
@@ -429,8 +457,7 @@ public class SearchPane<T> extends Pane {
         if (popupFunction != null) {
             Node popupNode = popupFunction.apply(cell.getItem());
             popup.setGraphic(popupNode);
-        }
-        else if (popupNodeHolder != null) {
+        } else if (popupNodeHolder != null) {
             popupNodeHolder.applyToCell(cell);
         }
         Bounds bounds = cell.localToScreen(cell.getBoundsInLocal());

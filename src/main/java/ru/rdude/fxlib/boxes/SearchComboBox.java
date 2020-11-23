@@ -37,7 +37,12 @@ public class SearchComboBox<T> extends ComboBox<T> {
 
     public SearchComboBox(ObservableList<T> items) {
         super(items);
-        filteredList = new FilteredList<>(items);
+        if (items instanceof FilteredList) {
+            filteredList = (FilteredList<T>) items;
+        }
+        else {
+            filteredList = new FilteredList<>(items);
+        }
         initTextListener();
         initShowListener();
         setItems(filteredList);
@@ -46,7 +51,10 @@ public class SearchComboBox<T> extends ComboBox<T> {
     }
 
     public void setCollection(Collection<T> collection) {
-        if (collection instanceof ObservableList) {
+        if (collection instanceof FilteredList) {
+            filteredList = (FilteredList<T>) collection;
+        }
+        else if (collection instanceof ObservableList) {
             filteredList = new FilteredList<>((ObservableList<T>) collection);
         }
         else {
