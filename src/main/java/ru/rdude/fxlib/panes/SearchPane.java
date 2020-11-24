@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -89,6 +90,9 @@ public class SearchPane<T> extends Pane {
     private PopupBuilder popupBuilder;
     private PopupNodeHolder popupNodeHolder;
     private Map<String, T> stringConverterMap;
+    // creating this context menu to all elements instead of creating one for every element
+    private ContextMenu elementsContextMenu;
+    private T contextMenuRequester;
 
     public SearchPane() {
         this(new ArrayList<>());
@@ -394,6 +398,20 @@ public class SearchPane<T> extends Pane {
         }
     }
 
+    public void addContextMenuItem(String name, Consumer<T> consumer) {
+        if (elementsContextMenu == null) {
+            elementsContextMenu = new ContextMenu();
+        }
+        MenuItem menuItem = new MenuItem(name);
+        menuItem.setOnAction(event -> {
+            if (contextMenuRequester != null) {
+                consumer.accept(contextMenuRequester);
+                contextMenuRequester = null;
+            }
+        });
+        elementsContextMenu.getItems().add(menuItem);
+    }
+
     public PopupBuilder popupBuilder() {
         if (popupBuilder == null) {
             popupBuilder = new PopupBuilder();
@@ -447,6 +465,13 @@ public class SearchPane<T> extends Pane {
                     } else {
                         hidePopup();
                     }
+                });
+            }
+            // set context menu
+            if (elementsContextMenu != null) {
+                cell.setContextMenu(elementsContextMenu);
+                cell.setOnContextMenuRequested(contextMenuEvent -> {
+                    contextMenuRequester = cell.getItem();
                 });
             }
             return cell;

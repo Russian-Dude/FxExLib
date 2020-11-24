@@ -118,7 +118,9 @@ public class Main extends Application {
                 .apply();
 
 
-        HBox hBox = new HBox(container, vBox, searchComboBox, searchPane, textField, radioButton);
+        SearchPane<String> searchPane2 = new SearchPane<>(List.of("1", "2", "3"));
+
+        HBox hBox = new HBox(container, vBox, searchComboBox, searchPane, searchPane2, textField, radioButton);
         container.setMinSize(400d, 400d);
         container.setMaxSize(400d, 400d);
 
@@ -129,6 +131,9 @@ public class Main extends Application {
         });
 
         container.setUniqueElements(false);
+
+        searchPane.addContextMenuItem("get name", testClass -> System.out.println(testClass.name));
+        searchPane.addContextMenuItem("get value", testClass -> System.out.println(testClass.value));
     }
 
     enum TestEnum { ONE, TWO, THREE, FOUR, FIVE }
