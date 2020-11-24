@@ -291,7 +291,7 @@ public class SearchPane<T> extends Pane {
     }
 
     /**
-     * Add node to the left from the list view. Try to link child controls to T getter functions.
+     * Add node close to the list view. Try to link child controls to T getter functions.
      * Getter method names of the objects in search pane must be same as controller field names ("get" and "is" are ignored).
      * Note: this method use reflection and force filtering use reflection as well. So if performance is an issue use
      * addSearchOptions method to link controls with methods manually.
@@ -429,8 +429,13 @@ public class SearchPane<T> extends Pane {
 
 
     private void updateSearch() {
+        T selectedItem = listView.getSelectionModel().getSelectedItem();
         filteredList.setPredicate(e -> predicates.values().stream()
                 .allMatch(tPredicate -> tPredicate.test(e)));
+        // need to manually reselect item because selection disappears after filtered list update.
+        if (filteredList.contains(selectedItem)) {
+            listView.getSelectionModel().select(selectedItem);
+        }
     }
 
     void updateCellFactory() {
