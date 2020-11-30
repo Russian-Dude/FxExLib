@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 /**
  * Extended version of MultipleChoiceContainer to use with big amount of available elements.
  * Every element of this container has Search Dialog that helps to find elements with filters.
- * This search dialog can be customised by with linking Control nodes getters with element's class getters.
+ * This search dialog can be customised by linking Control nodes getters with element's class getters.
  *
  * @param <T> type of the elements in container.
  * @param <C> controller type.
@@ -43,7 +43,20 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
      * Creation of this node is set by loader field or by class field. Setting this field will set extendedSearchExtraNodeClass field to null.
      * This will work with elementsSearchExtendedFunctions Map.
      */
+    @Deprecated
     private FXMLLoader loader;
+    /**
+     * Search Dialog for extended search options.
+     */
+    private SearchDialog<T> searchDialog;
+    /**
+     * Extra search node
+     */
+    private Node extraSearchNode;
+    /**
+     * Extra search node controller
+     */
+    private C extraSearchController;
     /**
      * Function to apply to popup in list view in extended search window.
      */
@@ -102,7 +115,7 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
             // name function
             if (elementsNameFunction != null) {
                 containerElement.getComboBoxNode().setNameBy(elementsNameFunction);
-                containerElement.getSearchDialog().getSearchPane().setNameBy(elementsNameFunction);
+                searchDialog.getSearchPane().setNameBy(elementsNameFunction);
             }
 
             // not null option
@@ -134,25 +147,8 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
 
             // extended search
             containerElement.setExtendedSearch(true);
-            Node extraSearchNode = null;
-            C controller = null;
-            if (loader != null) {
-                try {
-                    extraSearchNode = loader.load();
-                    controller = loader.getController();
-                } catch (IOException e) {
-                    throw new IllegalStateException("Loader was not set properly.");
-                }
-            } else if (extendedSearchExtraNodeClass != null) {
-                extraSearchNode = extendedSearchExtraNodeClass.getDeclaredConstructor().newInstance();
-                controller = (C) extraSearchNode;
-            }
-            if (extraSearchNode != null) {
-                containerElement.getSearchDialog().getSearchPane().getExtraPane().getChildren().add(extraSearchNode);
-                C finalController = controller;
-                containerElement.getSearchDialog().getSearchPane().addSearchOptions(
-                        elementsSearchExtendedFunctions.entrySet().stream()
-                                .collect(Collectors.toMap(entry -> entry.getKey().apply(finalController), Map.Entry::getValue, (a, b) -> a, HashMap::new)));
+            if (searchDialog != null) {
+                containerElement.setSearchDialog(searchDialog);
             }
 
             // extended search popup
@@ -173,23 +169,67 @@ public class MultipleChoiceContainerExtended<T, C> extends MultipleChoiceContain
         }
     }
 
+    private void createSearchDialog() {
+        createSearchDialog(false);
+    }
+
+    private void createSearchDialog(boolean forceReload) {
+        if (searchDialog == null || forceReload) {
+            if (loader != null) {
+                try {
+                    if (extraSearchNode == null) {
+                        extraSearchNode = loader.load();
+                    }
+                    if (extraSearchController == null) {
+                        extraSearchController = loader.getController();
+                    }
+                } catch (IOException e) {
+                    throw new IllegalStateException("Loader was not set properly.");
+                }
+            } else if (extendedSearchExtraNodeClass != null) {
+                try {
+                    extraSearchNode = extendedSearchExtraNodeClass.getDeclaredConstructor().newInstance();
+                    extraSearchController = (C) extraSearchNode;
+                }
+                catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                    throw new IllegalArgumentException("Can not load class for extended search");
+                }
+            }
+            searchDialog = new SearchDialog<>(elements);
+            if (extraSearchNode != null) {
+                searchDialog.getSearchPane().addExtraSearchNode(extraSearchNode);
+                searchDialog.getSearchPane().setSearchOptions(
+                        elementsSearchExtendedFunctions.entrySet().stream()
+                                .collect(Collectors.toMap(entry -> entry.getKey().apply(extraSearchController), Map.Entry::getValue, (a, b) -> a, HashMap::new)));
+            }
+        }
+    }
 
     public void setExtendedSearchOptions(Map<Function<C, Control>, Function<T, ?>> functionMap) {
         this.elementsSearchExtendedFunctions = functionMap;
+        createSearchDialog(true);
     }
 
     public void setExtendedSearchOptions(Class<? extends Node> extendedOptionsNode, Map<Function<C, Control>, Function<T, ?>> functionMap) {
         setExtendedSearchOptionsNode(extendedOptionsNode);
         setExtendedSearchOptions(functionMap);
+        createSearchDialog(true);
     }
 
     public void setExtendedSearchOptions(FXMLLoader loader, Map<Function<C, Control>, Function<T, ?>> functionMap) {
         setExtendedSearchOptionsNode(loader);
         setExtendedSearchOptions(functionMap);
+        createSearchDialog(true);
     }
 
     public void addExtendedSearchOption(Function<C, Control> controlGetter, Function<T, ?> elementGetter) {
         elementsSearchExtendedFunctions.put(controlGetter, elementGetter);
+        if (searchDialog == null) {
+            createSearchDialog();
+        }
+        else {
+            searchDialog.getSearchPane().addSearchOption(controlGetter.apply(extraSearchController), elementGetter);
+        }
     }
 
     public void removeExtendedSearchOption(Function<C, Control> controlGetter) {

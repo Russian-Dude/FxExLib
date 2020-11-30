@@ -2,6 +2,7 @@ package ru.rdude.fxlib.containers;
 
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
@@ -31,6 +32,7 @@ public class SearchDialog<R> extends Dialog<R> {
     }
 
     private void setMainPanes() {
+        getDialogPane().setPadding(new Insets(10));
         ButtonType buttonOk = new ButtonType("Select", ButtonBar.ButtonData.OK_DONE);
         ButtonType buttonCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         getDialogPane().getButtonTypes().add(buttonOk);

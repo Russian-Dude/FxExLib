@@ -100,9 +100,7 @@ public class SearchPane<T> extends Pane {
 
     public SearchPane(Collection<T> collection) {
         super();
-        if (collection instanceof FilteredList) {
-            filteredList = (FilteredList<T>) collection;
-        } else if (collection instanceof ObservableList) {
+        if (collection instanceof ObservableList) {
             filteredList = new FilteredList<>((ObservableList<T>) collection);
         } else {
             filteredList = new FilteredList<>(FXCollections.observableList(new ArrayList<>(collection)));
@@ -336,9 +334,7 @@ public class SearchPane<T> extends Pane {
     }
 
     public void setCollection(Collection<T> collection) {
-        if (collection instanceof FilteredList) {
-            filteredList = (FilteredList<T>) collection;
-        } else if (collection instanceof ObservableList) {
+        if (collection instanceof ObservableList) {
             filteredList = new FilteredList<>((ObservableList<T>) collection);
         } else {
             filteredList = new FilteredList<>(FXCollections.observableList(new ArrayList<>(collection)));

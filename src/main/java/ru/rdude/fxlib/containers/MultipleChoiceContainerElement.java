@@ -1,6 +1,7 @@
 package ru.rdude.fxlib.containers;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -55,11 +56,21 @@ public class MultipleChoiceContainerElement<T> extends HBox {
     public MultipleChoiceContainerElement(Collection<T> collection) {
         super();
         extendedSearch = false;
-        elements = new SearchComboBox<>();
+        if (collection instanceof ObservableList) {
+            elements = new SearchComboBox<>((ObservableList<T>) collection);
+        }
+        else {
+            elements = new SearchComboBox<>(FXCollections.observableArrayList(collection));
+        }
         searchButton = new Button("...");
         removeButton = new Button("X");
         removeButton.setOnAction(action -> removeFromParent());
-        searchButton.setOnAction(action -> searchDialog.showAndWait().ifPresent(this::setSelectedElement));
+        searchButton.setOnAction(action -> {
+            if (elements.getValue() != null) {
+                searchDialog.getSearchPane().getListView().getSelectionModel().select(elements.getValue());
+            }
+            searchDialog.showAndWait().ifPresent(this::setSelectedElement);
+        });
         searchDialog = new SearchDialog<>(collection);
         getChildren().add(elements);
         getChildren().add(removeButton);
@@ -140,5 +151,9 @@ public class MultipleChoiceContainerElement<T> extends HBox {
 
     public SearchDialog<T> getSearchDialog() {
         return searchDialog;
+    }
+
+    public void setSearchDialog(SearchDialog<T> searchDialog) {
+        this.searchDialog = searchDialog;
     }
 }
