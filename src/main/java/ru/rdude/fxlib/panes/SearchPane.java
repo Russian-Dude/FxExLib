@@ -52,6 +52,7 @@ import java.util.function.Predicate;
  * If linked function returns a Collection, checks if collection values after applying toString to them
  * contains control text.
  * Else if function returns a boolean, checks if this boolean equals to isSelected of the check box.
+ * If boolean returns null, result will be true
  * Else checks if function return value after applying toString equals control text.
  * <p>
  * RadioButton:
@@ -208,19 +209,27 @@ public class SearchPane<T> extends Pane {
             } else if (control instanceof Spinner) {
                 result = ((Spinner<?>) control).getValue().equals(value);
             } else if (control instanceof CheckBox) {
+                System.out.println("control is checkbox");
+                System.out.println("value is " + value);
+                if (value == null) {
+                    result = true;
+                }
                 Boolean boolValue = null;
                 try {
                     boolValue = (boolean) value;
                 } catch (Exception ignore) {
                 }
-                if (boolValue != null) {
+                System.out.println("after cast value is " + value);
+                if (boolValue != null && value != null) {
                     result = ((CheckBox) control).isSelected() == boolValue;
                 } else if (value instanceof Collection) {
                     String checkBoxText = ((CheckBox) control).getText();
                     result = ((Collection<?>) value).stream().map(Object::toString).anyMatch(s -> s.equals(checkBoxText));
-                } else {
+                } else if (value != null) {
+                    // unreachable
                     result = ((CheckBox) control).getText().equals(value.toString());
                 }
+                System.out.println("in the end of checkbox block value is " + value);
             } else if (control instanceof RadioButton) {
                 Boolean boolValue = null;
                 try {
