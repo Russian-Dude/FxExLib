@@ -209,8 +209,6 @@ public class SearchPane<T> extends Pane {
             } else if (control instanceof Spinner) {
                 result = ((Spinner<?>) control).getValue().equals(value);
             } else if (control instanceof CheckBox) {
-                System.out.println("control is checkbox");
-                System.out.println("value is " + value);
                 if (value == null) {
                     result = true;
                 }
@@ -219,7 +217,6 @@ public class SearchPane<T> extends Pane {
                     boolValue = (boolean) value;
                 } catch (Exception ignore) {
                 }
-                System.out.println("after cast value is " + value);
                 if (boolValue != null && value != null) {
                     result = ((CheckBox) control).isSelected() == boolValue;
                 } else if (value instanceof Collection) {
@@ -229,7 +226,6 @@ public class SearchPane<T> extends Pane {
                     // unreachable
                     result = ((CheckBox) control).getText().equals(value.toString());
                 }
-                System.out.println("in the end of checkbox block value is " + value);
             } else if (control instanceof RadioButton) {
                 Boolean boolValue = null;
                 try {
