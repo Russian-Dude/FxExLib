@@ -9,6 +9,7 @@ import javafx.scene.control.Control;
 import javafx.scene.layout.Priority;
 import ru.rdude.fxlib.boxes.SearchComboBox;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -47,14 +48,14 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
      *                first option - collection of the second value Search Combo Box (Collection);
      *                second option - nameBy function for Search Combo Box (Function V, String);
      *                third option - searchBy function for SearchComboBox (Function V, String);
-     *                fourth option- node class for extended search (Class or FXMLLoader);
+     *                fourth option- node class for extended search (Class or URL to fxml);
      *                fifth option - search options.
      */
     @Override
     public void setExtendedOptions(Object... options) {
         if (options[0] instanceof ExtendedOptionsBuilder) {
             ExtendedOptionsBuilder builder = (ExtendedOptionsBuilder) options[0];
-            setExtendedOptions(builder.collection, builder.nameByFunction, builder.searchByFunction, builder.getLoaderOrClass(), builder.extendedSearchFunctions);
+            setExtendedOptions(builder.collection, builder.nameByFunction, builder.searchByFunction, builder.getFxmlURLOrClass(), builder.extendedSearchFunctions);
             return;
         }
         if (options[0] instanceof Collection) {
@@ -68,7 +69,7 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
                 secondValueComboBox.setSearchBy((Collection<Function<V, String>>) options[2]);
             }
         }
-        if (options.length == 5 && (options[3] instanceof Class || options[3] instanceof FXMLLoader)) {
+        if (options.length == 5 && (options[3] instanceof Class || options[3] instanceof URL)) {
             secondValueSearchDialog = new SearchDialog<>((Collection<V>) options[0]);
             secondValueSearchButton = new Button("...");
             secondValueSearchButton.setOnAction(action -> secondValueSearchDialog.showAndWait().ifPresent(v -> secondValueComboBox.setValue(v)));
@@ -92,8 +93,9 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
             }
             else {
                 try {
-                    extendedSearchNode = ((FXMLLoader) options[3]).load();
-                    controller = ((FXMLLoader) options[3]).getController();
+                    FXMLLoader loader = new FXMLLoader((URL) options[3]);
+                    extendedSearchNode = loader.load();
+                    controller = loader.getController();
                 }
                 catch (Exception e) {
                     e.printStackTrace();
@@ -129,7 +131,7 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
         private ObservableList<T> collection;
         private Function<T, String> nameByFunction;
         private Function<T, String> searchByFunction;
-        private FXMLLoader extendedSearchNodeLoader;
+        private URL extendedSearchFxmlUrl;
         private Class<? extends Node> extendedSearchNodeClass;
         private Map<Function<C, Control>, Function<T,?>> extendedSearchFunctions;
 
@@ -147,11 +149,11 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
             return new S2();
         }
 
-        protected Object getLoaderOrClass() {
+        protected Object getFxmlURLOrClass() {
             if (extendedSearchNodeClass != null) {
                 return extendedSearchNodeClass;
             }
-            else return extendedSearchNodeLoader;
+            else return extendedSearchFxmlUrl;
         }
 
         public class S2 {
@@ -175,12 +177,12 @@ public class MultipleChoiceContainerElementTwoChoice<T, V> extends MultipleChoic
         public class S4 {
             public S5 setExtendedSearchNode(Class<? extends Node> extendedSearchNodeClass) {
                 ExtendedOptionsBuilder.this.extendedSearchNodeClass = extendedSearchNodeClass;
-                ExtendedOptionsBuilder.this.extendedSearchNodeLoader = null;
+                ExtendedOptionsBuilder.this.extendedSearchFxmlUrl = null;
                 return new S5();
             }
 
-            public S5 setExtendedSearchNode(FXMLLoader extendedSearchNodeLoader) {
-                ExtendedOptionsBuilder.this.extendedSearchNodeLoader = extendedSearchNodeLoader;
+            public S5 setExtendedSearchNode(URL extendedSearchFxmlURL) {
+                ExtendedOptionsBuilder.this.extendedSearchFxmlUrl = extendedSearchFxmlURL;
                 ExtendedOptionsBuilder.this.extendedSearchNodeClass = null;
                 return new S5();
             }
