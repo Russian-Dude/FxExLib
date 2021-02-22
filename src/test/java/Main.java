@@ -1,13 +1,18 @@
 import javafx.application.Application;
-import javafx.collections.ListChangeListener;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Control;
+import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import ru.rdude.fxlib.boxes.SearchComboBox;
-import ru.rdude.fxlib.containers.*;
+import ru.rdude.fxlib.containers.selector.SelectorContainer;
 import ru.rdude.fxlib.panes.SearchPane;
-import ru.rdude.fxlib.textfields.AutocomplitionTextField;
+import ru.rdude.fxlib.textfields.AutocompletionTextField;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,6 +47,7 @@ public class Main extends Application {
         primaryStage.show();
     }
 
+
     private void realTest() {
 
         TestClass te1 = new TestClass("first", 1, true);
@@ -58,44 +64,7 @@ public class Main extends Application {
         searchComboBox.setNameAndSearchBy(TestClass::getName);
         searchComboBox.setSearchBy(TestClass::getName, testClass -> String.valueOf(testClass.getValue()));
 
-        MultipleChoiceContainerExtended<TestEnum, SearchPane> container = new MultipleChoiceContainerExtended<>(List.of(TestEnum.values()));
-        container.setNodeElementType(MultipleChoiceContainerElementTwoChoiceWithPercents.class);
-        MultipleChoiceContainerElementTwoChoice.ExtendedOptionsBuilder<TestClass, SearchPane> optionsBuilder = MultipleChoiceContainerElementTwoChoice.extendedOptionsBuilder();
-        optionsBuilder.setCollection(testClassList)
-                .setNameByFunction(TestClass::getName)
-                .setSearchByFunction(TestClass::getName)
-                .setExtendedSearchNode(SearchPane.class)
-                .addExtendedSearchFunction(SearchPane::getSearchTextField, TestClass::getName);
-        container.setExtendedOptions(optionsBuilder);
-        container.setNameBy(TestEnum::name);
-        container.setSearchBy(TestEnum::name);
-        container.setUniqueElements(true);
-
-
-/*
- *                first option - collection of the second value Search Combo Box (Collection);
- *                second option - nameBy function for Search Combo Box (Function V, String);
- *                third option - searchBy function for SearchComboBox (Function V, String);
- *                fourth option- node class for extended search (Class or FXMLLoader);
- *                fifth option - search options.
- */
-        TitledMultipleChoiceContainer<TestClass> container2 = new TitledMultipleChoiceContainer<>(testClassList, "test node");
-        container2.setNodeElementType(MultipleChoiceContainerElementWithTextField.class);
-        TitledMultipleChoiceContainer<TestClass> container3 = new TitledMultipleChoiceContainer<>(testClassList, "test node");
-        container3.setNodeElementType(MultipleChoiceContainerElementWithAutofillTextField.class);
-        MultipleChoiceContainerElementWithAutofillTextField.AutocomplitionTextFieldBuilder<TestClass> builder = MultipleChoiceContainerElementWithAutofillTextField.builder();
-        builder.setCollection(testClassList)
-                .setExtendedDescriptionFunction(testClass -> testClass.getName() + " super test")
-                .setNameFunction(TestClass::getName);
-        container3.setExtendedOptions(builder);
-
-        AutocomplitionTextField<TestClass> autocomplitionTextField = new AutocomplitionTextField();
-        autocomplitionTextField.setElements(testClassList);
-        autocomplitionTextField.setItemNameFunction(TestClass::getName);
-        autocomplitionTextField.setExtendedDescriptionFunction(testClass -> testClass.getName().toUpperCase() + " test description");
-
         mainPane.setMinWidth(300);
-        VBox vBox = new VBox(container2, container3, autocomplitionTextField);
 
         TextField textField = new TextField();
         RadioButton radioButton = new RadioButton("fourth");
@@ -120,20 +89,49 @@ public class Main extends Application {
 
         SearchPane<String> searchPane2 = new SearchPane<>(List.of("1", "2", "3"));
 
-        HBox hBox = new HBox(container, vBox, searchComboBox, searchPane, searchPane2, textField, radioButton);
-        container.setMinSize(400d, 400d);
-        container.setMaxSize(400d, 400d);
+        //HBox hBox = new HBox(container, vBox, searchComboBox, searchPane, searchPane2, textField, radioButton);
+        HBox hBox = new HBox();
 
         mainPane.getChildren().add(hBox);
 
-        container.getElementsObservable().addListener((ListChangeListener<TestEnum>) change -> {
-            System.out.println(container.getElementsObservable());
-        });
-
-        container.setUniqueElements(false);
-
         searchPane.addContextMenuItem("get name", testClass -> System.out.println(testClass.name));
         searchPane.addContextMenuItem("get value", testClass -> System.out.println(testClass.value));
+
+
+/*        var selectorContainer = new SelectorContainerDepr<>(testClassList, SelectorElementPercent::new);
+        selectorContainer.setSearchDialogNameBy(TestClass::getName);
+        selectorContainer.setSearchDialogSearchBy(TestClass::getName);
+        selectorContainer.addOption(n -> n.setPercents(15));
+        */
+
+/*        var selectorContainer = SelectorContainerDepr.withTwoComboBoxes(testClassList, List.of("1", "2", "3"));
+        selectorContainer.addOption(c -> c.setNameAndSearchBy(TestClass::getName));*/
+
+        var selectorContainer = SelectorContainer.withAutocompletionTextField(testClassList, List.of("qwerty", "asdfgh"));
+        selectorContainer.addOption(e -> e.setSizePercentages(80, 20));
+
+/*        var selectorContainer = new SelectorContainerDepr<>(testClassList, SearchComboBox::new);
+        selectorContainer.addOption(n -> n.setNameAndSearchBy(TestClass::getName));
+        selectorContainer.setSearchDialogNameBy(TestClass::getName);
+        selectorContainer.setSearchDialogSearchBy(TestClass::getName);
+        selectorContainer.setHasSearchButton(false);*/
+
+/*        var selectorContainer = new SelectorContainerDepr<>(testClassList, SelectorElementTwoChoice::new);
+        selectorContainer.addOption(n -> n.setNameAndSearchBy(TestClass::getName));
+        selectorContainer.addOption(n -> n.setSecondCollection(Set.of("one", "two", "three")));*/
+
+        hBox.setPrefWidth(300);
+        hBox.setMinWidth(300);
+        hBox.setMaxHeight(100);
+        hBox.getChildren().add(selectorContainer);
+
+        AutocompletionTextField<TestClass> autocompletionTextField = new AutocompletionTextField<>(testClassList);
+        autocompletionTextField.setNameBy(TestClass::getName);
+        autocompletionTextField.setType(AutocompletionTextField.Type.WORDS);
+        autocompletionTextField.setWordsDelimiter("\\W");
+        autocompletionTextField.setElementDescriptionFunction(t -> "(" + t.getValue() + ")");
+        hBox.getChildren().add(autocompletionTextField);
+
     }
 
     enum TestEnum { ONE, TWO, THREE, FOUR, FIVE }
@@ -146,6 +144,7 @@ public class Main extends Application {
         private TextField textField;
         private List<String> collection;
         private Label label;
+        private Image image;
 
         public TestClass(String name, int value, boolean isTrue) {
             this.name = name;
@@ -210,6 +209,14 @@ public class Main extends Application {
 
         public void setLabel(Label label) {
             this.label = label;
+        }
+
+        public Image getImage() {
+            return image;
+        }
+
+        public void setImage(Image image) {
+            this.image = image;
         }
     }
 }

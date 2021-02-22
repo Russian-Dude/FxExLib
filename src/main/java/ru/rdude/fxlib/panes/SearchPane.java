@@ -16,7 +16,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.HTMLEditor;
 import javafx.util.StringConverter;
-import ru.rdude.fxlib.containers.ValueProvider;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -120,8 +119,16 @@ public class SearchPane<T> extends Pane {
     }
 
     @SafeVarargs
-    public final void setTextFieldSearchBy(Function<T, String>... functions) {
-        setTextFieldSearchBy(List.of(functions));
+    public final void setTextFieldSearchBy(Function<T, String> function, Function<T, String>... functions) {
+        if (function == null) {
+            throw new NullPointerException();
+        }
+        Set<Function<T, String>> set = new HashSet<>();
+        set.add(function);
+        if (functions != null) {
+            set.addAll(Arrays.asList(functions));
+        }
+        setTextFieldSearchBy(set);
     }
 
     public void setTextFieldSearchBy(Collection<Function<T, String>> functions) {

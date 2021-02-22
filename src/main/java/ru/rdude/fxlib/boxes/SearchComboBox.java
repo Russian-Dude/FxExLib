@@ -4,10 +4,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.util.StringConverter;
+import ru.rdude.fxlib.containers.selector.SelectorElementNode;
 
 import java.util.*;
 import java.util.function.Function;
@@ -23,29 +23,23 @@ import java.util.function.Function;
  * Both options can be set at once with setNameAndSearchBy() method.
  * Items can be set from any collection by using setCollection() method.
  */
-public class SearchComboBox<T> extends ComboBox<T> {
+public class SearchComboBox<T> extends ComboBox<T> implements SelectorElementNode<T> {
 
     private FilteredList<T> filteredList;
     private boolean isTyped;
     private Set<Function<T, String>> getElementSearchFunctions;
     private Map<String, T> stringConverterMap;
+    private boolean searchEnabled = true;
 
 
     public SearchComboBox() {
         this(FXCollections.observableList(new ArrayList<>()));
     }
 
-    public SearchComboBox(ObservableList<T> items) {
-        super(items);
-        if (items instanceof FilteredList) {
-            filteredList = (FilteredList<T>) items;
-        }
-        else {
-            filteredList = new FilteredList<>(items);
-        }
+    public SearchComboBox(Collection<T> items) {
         initTextListener();
         initShowListener();
-        setItems(filteredList);
+        setCollection(items);
         isTyped = false;
         getElementSearchFunctions = Set.of(Object::toString);
     }
@@ -60,14 +54,30 @@ public class SearchComboBox<T> extends ComboBox<T> {
         setItems(filteredList);
     }
 
+    public boolean isSearchEnabled() {
+        return searchEnabled;
+    }
+
+    public void setSearchEnabled(boolean searchEnabled) {
+        this.searchEnabled = searchEnabled;
+    }
+
     public void setNameAndSearchBy(Function<T, String> function) {
         setSearchBy(function);
         setNameBy(function);
     }
 
-    @SafeVarargs
-    public final void setSearchBy(Function<T, String>... functions) {
-        setSearchBy(Arrays.asList(functions));
+    @SuppressWarnings(value = "varargs")
+    public void setSearchBy(Function<T, String> function, Function<T, String>... functions) {
+        if (function == null) {
+            throw new NullPointerException();
+        }
+        Set<Function<T, String>> set = new HashSet<>();
+        set.add(function);
+        if (functions != null) {
+            set.addAll(Arrays.asList(functions));
+        }
+        setSearchBy(set);
     }
 
     public void setSearchBy(Collection<Function<T, String>> functions) {
@@ -75,6 +85,9 @@ public class SearchComboBox<T> extends ComboBox<T> {
     }
 
     public void setNameBy(Function<T, String> function) {
+        if (function == null) {
+            throw new NullPointerException();
+        }
         stringConverterMap = new HashMap<>();
         for (T t : filteredList) {
             String name = function.apply(t);
@@ -136,8 +149,9 @@ public class SearchComboBox<T> extends ComboBox<T> {
     }
 
     private void initShowListener() {
+        getEditor().setPrefWidth(0);
         showingProperty().addListener(((observableValue, oldV, newV) -> {
-            if (newV) {
+            if (searchEnabled && newV) {
                 setEditable(true);
                 filteredList.setPredicate(e -> true);
                 setPromptText(getConverter().toString(getValue()));
