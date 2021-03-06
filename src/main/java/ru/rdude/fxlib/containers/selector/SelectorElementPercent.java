@@ -29,7 +29,7 @@ public class SelectorElementPercent<T> extends SelectorElementTextField<T> {
     }
 
     public void setPercentsAsCoefficient(double coefficient) {
-        setPercents(coefficient / 100);
+        setPercents(coefficient * 100);
     }
 
     public double getPercents() {
@@ -38,6 +38,6 @@ public class SelectorElementPercent<T> extends SelectorElementTextField<T> {
     }
 
     public double getCoefficient() {
-        return getPercents() * 100;
+        return getPercents() / 100;
     }
 }
