@@ -71,7 +71,7 @@ public class SelectorElementAutocompletionTextField<T, V> extends GridPane imple
         getColumnConstraints().get(1).setPercentWidth(textField);
     }
 
-    public void setTextFieldTypeType(AutocompletionTextField.Type type) {
+    public void setTextFieldType(AutocompletionTextField.Type type) {
         textField.setType(type);
     }
 
