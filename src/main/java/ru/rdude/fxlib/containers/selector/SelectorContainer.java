@@ -12,6 +12,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.jetbrains.annotations.NotNull;
+import ru.rdude.fxlib.boxes.SearchComboBox;
 import ru.rdude.fxlib.dialogs.SearchDialog;
 
 import java.util.*;
@@ -32,6 +33,18 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
     private final SimpleObjectProperty<Predicate<T>> searchDialogPredicate = new SimpleObjectProperty<>(t -> !getSelected().contains(t));
     private final SimpleObjectProperty<FilteredList<T>> searchDialogFilteredList = new SimpleObjectProperty<>();
 
+    public static <T> SelectorContainer<T, SearchComboBox<T>> simple(@NotNull Collection<T> collection) {
+        return SelectorFactory.simple(collection);
+    }
+
+    @SafeVarargs
+    public static <T> SelectorContainer<T, SearchComboBox<T>> simple(
+            @NotNull Collection<T> collection,
+            @NotNull Function<T, String> nameFunction,
+            Function<T, String>... searchFunctions) {
+
+        return SelectorFactory.simple(collection, nameFunction, searchFunctions);
+    }
 
     public static <T, V> SelectorContainer<T, SelectorElementAutocompletionTextField<T, V>> withAutocompletionTextField(
             @NotNull Collection<T> collection,
@@ -134,6 +147,10 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
 
     public void add(T t) {
         selectedElementsNodes.add(holderBuilder.create(t));
+    }
+
+    public void addAll(Collection<T> values) {
+        values.forEach(this::add);
     }
 
     public void removeFirst(T t) {

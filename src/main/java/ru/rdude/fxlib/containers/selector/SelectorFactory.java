@@ -1,12 +1,38 @@
 package ru.rdude.fxlib.containers.selector;
 
 import org.jetbrains.annotations.NotNull;
+import ru.rdude.fxlib.boxes.SearchComboBox;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 final class SelectorFactory {
+
+    public static <T> SelectorContainer<T, SearchComboBox<T>> simple(@NotNull Collection<T> collection) {
+        return new SelectorContainer<>(collection, () -> new SearchComboBox<>(collection));
+    }
+
+    @SafeVarargs
+    public static <T> SelectorContainer<T, SearchComboBox<T>> simple(
+            @NotNull Collection<T> collection,
+            @NotNull Function<T, String> nameFunction,
+            Function<T, String>... searchFunctions) {
+        SelectorContainer<T, SearchComboBox<T>> res = new SelectorContainer<>(collection, () -> new SearchComboBox<>(collection));
+        res.setSearchDialogNameBy(nameFunction);
+        res.addOption(b -> b.setNameBy(nameFunction));
+        if (searchFunctions != null && searchFunctions.length > 0) {
+            Function<T, String> first = searchFunctions[0];
+            Function<T, String>[] other = Arrays.stream(searchFunctions)
+                    .filter(f -> !f.equals(first))
+                    .toArray((IntFunction<Function<T, String>[]>) Function[]::new);
+            res.setSearchDialogSearchBy(first, other);
+            res.addOption(b -> b.setSearchBy(first, other));
+        }
+        return res;
+    }
+
 
     public static <T, V> SelectorContainer<T, SelectorElementAutocompletionTextField<T, V>> withAutocompletionTextField(
             @NotNull Collection<T> collection,

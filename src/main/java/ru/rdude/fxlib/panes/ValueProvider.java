@@ -1,4 +1,4 @@
-package ru.rdude.fxlib.containers;
+package ru.rdude.fxlib.panes;
 
 public interface ValueProvider<T> {
     T getValue();
