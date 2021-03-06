@@ -145,8 +145,10 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
         selectedElementsNodes.clear();
     }
 
-    public void add(T t) {
-        selectedElementsNodes.add(holderBuilder.create(t));
+    public E add(T t) {
+        ElementHolder holder = holderBuilder.create(t);
+        selectedElementsNodes.add(holder);
+        return holder.elementNode;
     }
 
     public void addAll(Collection<T> values) {
@@ -176,8 +178,10 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
                 .collect(Collectors.toCollection(collectionSupplier));
     }
 
-    public ObservableList<ElementHolder> getSelectedElementsNodes() {
-        return selectedElementsNodes;
+    public List<E> getSelectedElementsNodes() {
+        return selectedElementsNodes.stream()
+                .map(n -> n.elementNode)
+                .collect(Collectors.toList());
     }
 
     public boolean isUnique() {
