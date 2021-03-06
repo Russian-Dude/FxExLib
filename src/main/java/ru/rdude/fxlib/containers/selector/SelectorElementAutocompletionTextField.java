@@ -91,7 +91,9 @@ public class SelectorElementAutocompletionTextField<T, V> extends GridPane imple
         textField.setCollection(elements);
     }
 
-
+    public void setTextFieldDescriptionFunction(Function<V, String> elementDescriptionFunction) {
+        textField.setElementDescriptionFunction(elementDescriptionFunction);
+    }
 
     @Override
     public Property<T> valueProperty() {
