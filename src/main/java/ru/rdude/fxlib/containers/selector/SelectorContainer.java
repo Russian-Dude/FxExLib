@@ -393,6 +393,9 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
             this.elementNode.setCollection(collection);
             setMinWidth(0d);
             setCenter(elementNode);
+            if (elementNode instanceof SearchComboBox) {
+                ((SearchComboBox<?>) elementNode).setMaxWidth(Double.MAX_VALUE);
+            }
         }
 
         T getValue() {
