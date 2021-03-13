@@ -7,7 +7,6 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Side;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import org.intellij.lang.annotations.RegExp;
@@ -171,7 +170,7 @@ public class AutocompletionTextField<T> extends TextField {
                 String word = newV.substring(start, end);
                 filteredElements.get().setPredicate(t -> elementNameFunction.get().apply(t).toLowerCase().contains(word.toLowerCase()));
             }
-            if (filteredElements.get().size() > 0) {
+            if (filteredElements.get().size() > 0 && isFocused()) {
                 popup.get().show(AutocompletionTextField.this, Side.BOTTOM, 0, 0);
             }
             else {
