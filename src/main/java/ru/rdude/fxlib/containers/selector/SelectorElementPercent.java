@@ -25,7 +25,7 @@ public class SelectorElementPercent<T> extends SelectorElementTextField<T> {
     }
 
     public void setPercents(double percents) {
-        getTextField().textProperty().setValue(String.valueOf(percents).replaceAll("\\.0+", "") + " %");
+        getTextField().textProperty().setValue(String.valueOf(percents).replaceAll("\\.0+\\b", "") + " %");
     }
 
     public void setPercentsAsCoefficient(double coefficient) {
