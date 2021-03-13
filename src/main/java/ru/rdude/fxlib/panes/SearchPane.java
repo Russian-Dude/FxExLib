@@ -16,6 +16,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.HTMLEditor;
 import javafx.util.StringConverter;
+import ru.rdude.fxlib.containers.selector.SelectorContainer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -37,15 +38,18 @@ import java.util.function.Predicate;
  * To use complex filtering link Controls to Functions that called on every element of the list view by passing
  * Control and Function or Map with Control keys and Function values to addSearchOptions or setSearchOptions methods.
  * Search will work based on provided Controls:
+ * </p>
  * <p>
  * TextInputControl, HTMLEditor:
  * If linked Function returns a Collection, checks if collection values after applying toString to them
  * contains control text .
  * Else checks if function return value after applying toString equals to control text.
+ * </p>
  * <p>
  * ComboBox, ChoiceBox, Spinner, ValueProvider:
  * If linked Function returns a Collection, checks if collection contains selected value.
  * Else checks if function return value equals to selected value.
+ * </p>
  * <p>
  * CheckBox:
  * If linked function returns a Collection, checks if collection values after applying toString to them
@@ -53,9 +57,16 @@ import java.util.function.Predicate;
  * Else if function returns a boolean, checks if this boolean equals to isSelected of the check box.
  * If boolean returns null, result will be true
  * Else checks if function return value after applying toString equals control text.
+ * </p>
  * <p>
  * RadioButton:
  * Same as CheckBox but filters only when RadioButton is selected.
+ * <p>
+ * SelectorContainer:
+ * If linked function returns a Collection, checks if this collection contains all selected elements from SelectorContainer
+ * Else checks if return of the functions contains in selected elements of SelectorContainer
+ * </p>
+ * </p>
  * <p>
  * Also filtering can be set by passing custom Predicate to addSearchOptions method.
  * <p>
@@ -261,7 +272,16 @@ public class SearchPane<T> extends Pane {
                 } else {
                     result = ((ValueProvider<?>) control).getValue().equals(value);
                 }
-            } else {
+            }
+            else if (control instanceof SelectorContainer) {
+                if (value instanceof Collection) {
+                    result = ((Collection<?>) value).containsAll(((SelectorContainer<?, ?>) control).getSelected());
+                }
+                else {
+                    result = ((SelectorContainer<?, ?>) control).getSelected().contains(value);
+                }
+            }
+            else {
                 throw new IllegalArgumentException("Controls can only be be instances of: " +
                         "TextInputControl, ComboBoxBase, ChoiceBox, HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider. " +
                         "Control creating this exception is: " + control.getClass());
