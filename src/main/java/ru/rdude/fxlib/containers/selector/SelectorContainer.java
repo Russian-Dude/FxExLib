@@ -15,7 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import ru.rdude.fxlib.boxes.SearchComboBox;
 import ru.rdude.fxlib.dialogs.SearchDialog;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.function.*;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,11 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
     private final SearchDialog<T> searchDialog = new SearchDialog<>();
     private final SimpleObjectProperty<Predicate<T>> searchDialogPredicate = new SimpleObjectProperty<>(t -> !getSelected().contains(t));
     private final SimpleObjectProperty<FilteredList<T>> searchDialogFilteredList = new SimpleObjectProperty<>();
+
+    private static final String DEFAULT_STYLE_CLASS = "fxex-selector-container";
+    private static final String ADD_BUTTON_STYLE_CLASS = "fxex-selector-container-add-button";
+    private static final String REMOVE_BUTTON_STYLE_CLASS = "fxex-selector-container-remove-button";
+    private static final String SEARCH_BUTTON_STYLE_CLASS = "fxex-selector-container-search-button";
 
     public static <T> SelectorContainer<T, SearchComboBox<T>> simple(@NotNull Collection<T> collection) {
         return SelectorFactory.simple(collection);
@@ -119,6 +126,8 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
 
     public SelectorContainer(Collection<T> elements, Supplier<E> elementNodeCreator) {
         super();
+        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+        addButton.getStyleClass().add(ADD_BUTTON_STYLE_CLASS);
         this.elementNodeCreator = elementNodeCreator;
         setElements(elements);
 
@@ -346,6 +355,7 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
             // search button
             if (hasSearchButton.get()) {
                 elementHolder.searchButton = new Button();
+                elementHolder.searchButton.getStyleClass().add(SEARCH_BUTTON_STYLE_CLASS);
                 searchButtonOptions.forEach(c -> c.accept(elementHolder.searchButton));
                 elementHolder.searchButton.setOnAction(event -> {
                     searchDialogFilteredList.get().setPredicate(t1 -> t1.equals(elementHolder.getValue()) || selectedElementsNodes.stream().map(ElementHolder::getValue).noneMatch(t1::equals));
@@ -361,6 +371,7 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
 
             // delete button
             elementHolder.deleteButton = new Button();
+            elementHolder.deleteButton.getStyleClass().add(REMOVE_BUTTON_STYLE_CLASS);
             deleteButtonOptions.forEach(c -> c.accept(elementHolder.deleteButton));
             elementHolder.deleteButton.setOnAction(event -> {
                 remove(elementHolder);
