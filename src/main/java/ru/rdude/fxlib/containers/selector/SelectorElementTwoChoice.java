@@ -1,6 +1,7 @@
 package ru.rdude.fxlib.containers.selector;
 
 import javafx.beans.property.Property;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import ru.rdude.fxlib.boxes.SearchComboBox;
@@ -62,18 +63,33 @@ public class SelectorElementTwoChoice<T, V> extends GridPane implements Selector
         searchComboBox.setNameAndSearchBy(function);
     }
 
+    public void setNameAndSearchByProperty(Function<T, ObservableValue<String>> function) {
+        searchComboBox.setNameAndSearchByProperty(function);
+    }
+
     public void setNameBy(Function<T, String> function) {
         searchComboBox.setNameBy(function);
+    }
+
+    public void setNameByProperty(Function<T, ObservableValue<String>> function) {
+        searchComboBox.setNameByProperty(function);
     }
 
     public void setSearchBy(Function<T, String> function, Function<T, String>... functions) {
         searchComboBox.setSearchBy(function, functions);
     }
 
+    public void setSearchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
+        searchComboBox.setSearchByProperty(function, functions);
+    }
+
     public void setSearchBy(Collection<Function<T, String>> functions) {
         searchComboBox.setSearchBy(functions);
     }
 
+    public void setSearchByProperty(Collection<Function<T, ObservableValue<String>>> functions) {
+        searchComboBox.setSearchByProperty(functions);
+    }
 
     public Property<V> getSecondValueProperty() {
         return secondSearchComboBox.valueProperty();
@@ -99,21 +115,40 @@ public class SelectorElementTwoChoice<T, V> extends GridPane implements Selector
         secondSearchComboBox.setNameAndSearchBy(function);
     }
 
+    public void setSecondSearchByProperty(Function<V, ObservableValue<String>> function) {
+        secondSearchComboBox.setNameAndSearchByProperty(function);
+    }
+
     public void setSecondSearchBy(Function<V, String> function, Function<V, String>... functions) {
         secondSearchComboBox.setSearchBy(function, functions);
+    }
+
+    public void setSecondSearchByProperty(Function<V, ObservableValue<String>> function, Function<V, ObservableValue<String>>... functions) {
+        secondSearchComboBox.setSearchByProperty(function, functions);
     }
 
     public void setSecondSearchBy(Collection<Function<V, String>> functions) {
         secondSearchComboBox.setSearchBy(functions);
     }
 
+    public void setSecondSearchByProperty(Collection<Function<V, ObservableValue<String>>> functions) {
+        secondSearchComboBox.setSearchByProperty(functions);
+    }
+
     public void setSecondNameAndSearchBy(Function<V, String> function) {
         secondSearchComboBox.setNameAndSearchBy(function);
     }
 
+    public void setSecondNameAndSearchByProperty(Function<V, ObservableValue<String>> function) {
+        secondSearchComboBox.setNameAndSearchByProperty(function);
+    }
 
     public void setSecondNameBy(Function<V, String> function) {
         secondSearchComboBox.setNameBy(function);
+    }
+
+    public void setSecondNameByProperty(Function<V, ObservableValue<String>> function) {
+        secondSearchComboBox.setNameByProperty(function);
     }
 
     public final void setSizePercentages(double main, double second) {

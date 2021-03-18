@@ -2,6 +2,7 @@ package ru.rdude.fxlib.containers.selector;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -50,16 +51,32 @@ public class SelectorElementAutocompletionTextField<T, V> extends GridPane imple
         searchComboBox.setNameAndSearchBy(function);
     }
 
+    public void setNameAndSearchByProperty(Function<T, ObservableValue<String>> function) {
+        searchComboBox.setNameAndSearchByProperty(function);
+    }
+
     public void setNameBy(Function<T, String> function) {
         searchComboBox.setNameBy(function);
+    }
+
+    public void setNameByProperty(Function<T, ObservableValue<String>> function) {
+        searchComboBox.setNameByProperty(function);
     }
 
     public void setSearchBy(Function<T, String> function, Function<T, String>... functions) {
         searchComboBox.setSearchBy(function, functions);
     }
 
+    public void setSearchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
+        searchComboBox.setSearchByProperty(function, functions);
+    }
+
     public void setSearchBy(Collection<Function<T, String>> functions) {
         searchComboBox.setSearchBy(functions);
+    }
+
+    public void setSearchByProperty(Collection<Function<T, ObservableValue<String>>> functions) {
+        searchComboBox.setSearchByProperty(functions);
     }
 
     public void setSearchEnabled(boolean searchEnabled) {
@@ -79,6 +96,10 @@ public class SelectorElementAutocompletionTextField<T, V> extends GridPane imple
         textField.setNameBy(elementNameFunction);
     }
 
+    public void setTextFieldNameByProperty(Function<V, ObservableValue<String>> elementNameFunction) {
+        textField.setNameByProperty(elementNameFunction);
+    }
+
     public void setWordsDelimiter(@RegExp String regex) {
         textField.setWordsDelimiter(regex);
     }
@@ -93,6 +114,10 @@ public class SelectorElementAutocompletionTextField<T, V> extends GridPane imple
 
     public void setTextFieldDescriptionFunction(Function<V, String> elementDescriptionFunction) {
         textField.setElementDescriptionFunction(elementDescriptionFunction);
+    }
+
+    public void setTextFieldDescriptionByPropertyFunction(Function<V, ObservableValue<String>> elementDescriptionFunction) {
+        textField.setElementDescriptionByPropertyFunction(elementDescriptionFunction);
     }
 
     @Override

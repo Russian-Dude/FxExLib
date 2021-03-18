@@ -1,6 +1,7 @@
 package ru.rdude.fxlib.textfields;
 
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -11,6 +12,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NotNull;
+import utils.FunctionRawOrProperty;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,8 +30,8 @@ public class AutocompletionTextField<T> extends TextField {
     private final SimpleObjectProperty<ContextMenu> popup = new SimpleObjectProperty<>(new ContextMenu());
     private final SimpleObjectProperty<ObservableList<T>> elements = new SimpleObjectProperty<>(FXCollections.observableArrayList(new ArrayList<>()));
     private final SimpleObjectProperty<FilteredList<T>> filteredElements = new SimpleObjectProperty<>(new FilteredList<>(FXCollections.observableArrayList(new ArrayList<>())));
-    private final SimpleObjectProperty<Function<T, String>> elementNameFunction = new SimpleObjectProperty<>(Object::toString);
-    private final SimpleObjectProperty<Function<T, String>> elementDescriptionFunction = new SimpleObjectProperty<>();
+    private final SimpleObjectProperty<FunctionRawOrProperty<T, String>> elementNameFunction = new SimpleObjectProperty<>(FunctionRawOrProperty.raw(Object::toString));
+    private final SimpleObjectProperty<FunctionRawOrProperty<T, String>> elementDescriptionFunction = new SimpleObjectProperty<>();
     private final SimpleObjectProperty<Type> type = new SimpleObjectProperty<>(Type.FULL_STRING_CONTAINS);
     private final SimpleObjectProperty<String> wordsDelimiter = new SimpleObjectProperty<>("\\s");
 
@@ -62,20 +64,8 @@ public class AutocompletionTextField<T> extends TextField {
         return popup;
     }
 
-    public FilteredList getFilteredElements() {
-        return filteredElements.get();
-    }
-
     public SimpleObjectProperty<FilteredList<T>> filteredElementsProperty() {
         return filteredElements;
-    }
-
-    public Function getElementNameFunction() {
-        return elementNameFunction.get();
-    }
-
-    public SimpleObjectProperty<Function<T, String>> elementNameFunctionProperty() {
-        return elementNameFunction;
     }
 
     public Type getType() {
@@ -100,7 +90,11 @@ public class AutocompletionTextField<T> extends TextField {
     }
 
     public void setNameBy(Function<T, String> elementNameFunction) {
-        this.elementNameFunction.set(elementNameFunction);
+        this.elementNameFunction.set(FunctionRawOrProperty.raw(elementNameFunction));
+    }
+
+    public void setNameByProperty(Function<T, ObservableValue<String>> elementNameFunction) {
+        this.elementNameFunction.set(FunctionRawOrProperty.property(elementNameFunction));
     }
 
     public String getWordsDelimiter() {
@@ -115,16 +109,12 @@ public class AutocompletionTextField<T> extends TextField {
         this.wordsDelimiter.set(regex);
     }
 
-    public Function<T, String> getElementDescriptionFunction() {
-        return elementDescriptionFunction.get();
-    }
-
-    public SimpleObjectProperty<Function<T, String>> elementDescriptionFunctionProperty() {
-        return elementDescriptionFunction;
-    }
-
     public void setElementDescriptionFunction(Function<T, String> elementDescriptionFunction) {
-        this.elementDescriptionFunction.set(elementDescriptionFunction);
+        this.elementDescriptionFunction.set(FunctionRawOrProperty.raw(elementDescriptionFunction));
+    }
+
+    public void setElementDescriptionByPropertyFunction(Function<T, ObservableValue<String>> elementDescriptionFunction) {
+        this.elementDescriptionFunction.set(FunctionRawOrProperty.property(elementDescriptionFunction));
     }
 
     private void initListeners() {
@@ -222,85 +212,3 @@ public class AutocompletionTextField<T> extends TextField {
 
 
 }
-
-
-/*
-    public Function<T, String> getItemNameFunction() {
-        return itemNameFunction;
-    }
-
-    public void setItemNameFunction(Function<T, String> itemNameFunction) {
-        this.itemNameFunction = itemNameFunction;
-    }
-
-    public Function<T, String> getExtendedDescriptionFunction() {
-        return extendedDescriptionFunction;
-    }
-
-    public void setExtendedDescriptionFunction(Function<T, String> extendedDescriptionFunction) {
-        this.extendedDescriptionFunction = extendedDescriptionFunction;
-    }
-
-    private void setTextListener() {
-        // Create listener
-        ChangeListener<String> listener = (changeEvent, oldValue, newValue) -> {
-            String enteredText = getText();
-            if (enteredText == null || enteredText.isEmpty()) {
-                popup.hide();
-            } else {
-                popup.getItems().clear();
-                // Create menu popup and add all suggestions to it.
-                // Due to parent TextField class place caret to the start after text change, manually place caret to
-                // the position after autocomplited word.
-                getSuggestions(enteredText).forEach(suggestion -> {
-                    MenuItem menuItem = new MenuItem(suggestion.fullName);
-                    menuItem.setOnAction(actionEvent -> {
-                        StringBuilder builder = new StringBuilder(getText());
-                        int caretPosition = getCaretPosition();
-                        builder.replace(caretPosition - textToReplace.length(), caretPosition, suggestion.name);
-                        setText(builder.toString());
-                        positionCaret(caretPosition + suggestion.name.length() - textToReplace.length());
-                    });
-                    popup.getItems().add(menuItem);
-                });
-                popup.show(AutocomplitionTextFieldBase.this, Side.BOTTOM, 0, 0);
-            }
-        };
-
-        // remove old listener if exists
-        if (currentListener != null) {
-            textProperty().removeListener(currentListener);
-        }
-
-        // set new listener
-        currentListener = listener;
-        textProperty().addListener(listener);
-    }
-
-    private Set<AutocomplitionTextFieldBase.ItemHolder> getSuggestions(String input) {
-        String remaining = input.toUpperCase();
-        for (T element : elements) {
-            String variableName = itemNameFunction.apply(element);
-            remaining = remaining.replaceAll(variableName.toUpperCase(), "");
-        }
-        remaining = remaining.replaceAll("[^\\p{Alpha}\\p{Pc}]", "");
-        if (remaining.length() < 1)
-            return new HashSet<>();
-        String finalRemaining = remaining;
-        textToReplace = remaining;
-        return elements.stream()
-                .map(AutocomplitionTextFieldBase.ItemHolder::new)
-                .filter(itemHolder -> itemHolder.name.toUpperCase().contains(finalRemaining))
-                .collect(Collectors.toSet());
-    }
-
-    private boolean validateElements(Collection<T> collection) {
-        return collection.stream()
-                .map(itemNameFunction)
-                .allMatch(element -> element.matches("[\\p{Alpha}\\p{Pc}]+"));
-    }
-
-
-}
-
- */

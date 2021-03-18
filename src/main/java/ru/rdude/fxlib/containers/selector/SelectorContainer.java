@@ -1,6 +1,7 @@
 package ru.rdude.fxlib.containers.selector;
 
 import javafx.beans.property.*;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -40,87 +41,28 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
     private static final String REMOVE_BUTTON_STYLE_CLASS = "fxex-selector-container-remove-button";
     private static final String SEARCH_BUTTON_STYLE_CLASS = "fxex-selector-container-search-button";
 
-    public static <T> SelectorContainer<T, SearchComboBox<T>> simple(@NotNull Collection<T> collection) {
-        return SelectorFactory.simple(collection);
+
+    public static <T> SelectorBuilder.SimpleSelectorBuilder<T> simple(@NotNull Collection<T> collection) {
+        return SelectorBuilder.simple(collection);
     }
 
-    @SafeVarargs
-    public static <T> SelectorContainer<T, SearchComboBox<T>> simple(
-            @NotNull Collection<T> collection,
-            @NotNull Function<T, String> nameFunction,
-            Function<T, String>... searchFunctions) {
-
-        return SelectorFactory.simple(collection, nameFunction, searchFunctions);
+    public static <T, V> SelectorBuilder.AutocompletionTextFieldSelectorBuilder<T, V> withAutocompletionTextField(
+            @NotNull Collection<T> mainCollection, @NotNull Collection<V> secondCollection) {
+        return SelectorBuilder.withAutoCompletionTextField(mainCollection, secondCollection);
     }
 
-    public static <T, V> SelectorContainer<T, SelectorElementAutocompletionTextField<T, V>> withAutocompletionTextField(
-            @NotNull Collection<T> collection,
-            @NotNull Collection<V> autocompletionCollection) {
-
-        return withAutocompletionTextField(collection, autocompletionCollection, null, null);
+    public static <T> SelectorBuilder.PercentSelectorBuilder<T> withPercents(@NotNull Collection<T> collection) {
+        return SelectorBuilder.withPercents(collection);
     }
 
-
-    @SafeVarargs
-    public static <T, V> SelectorContainer<T, SelectorElementAutocompletionTextField<T, V>> withAutocompletionTextField(
-            @NotNull Collection<T> collection,
-            @NotNull Collection<V> autocompletionCollection,
-            Function<T, String> nameFunction,
-            Function<V, String> autocompletionNameFunction,
-            @NotNull Function<T, String>... searchFunctions) {
-
-        return SelectorFactory.withAutocompletionTextField(collection, autocompletionCollection, nameFunction,
-                autocompletionNameFunction, searchFunctions);
+    public static <T> SelectorBuilder.TextFieldSelectorBuilder<T> withTextField(@NotNull Collection<T> collection) {
+        return SelectorBuilder.withTextField(collection);
     }
 
-
-    public static <T> SelectorContainer<T, SelectorElementPercent<T>> withPercents(@NotNull Collection<T> collection) {
-        return withPercents(collection, null);
-    }
-
-
-    @SafeVarargs
-    public static <T> SelectorContainer<T, SelectorElementPercent<T>> withPercents(
-            @NotNull Collection<T> collection,
-            Function<T, String> nameFunction,
-            @NotNull Function<T, String>... searchFunctions) {
-
-        return SelectorFactory.withPercents(collection, nameFunction, searchFunctions);
-    }
-
-
-    public static <T> SelectorContainer<T, SelectorElementTextField<T>> withTextField(@NotNull Collection<T> collection) {
-        return withTextField(collection, null);
-    }
-
-
-    @SafeVarargs
-    public static <T> SelectorContainer<T, SelectorElementTextField<T>> withTextField(
-            @NotNull Collection<T> collection,
-            Function<T, String> nameFunction,
-            @NotNull Function<T, String>... searchFunctions) {
-
-        return SelectorFactory.withTextField(collection, nameFunction, searchFunctions);
-    }
-
-
-    public static <T, V> SelectorContainer<T, SelectorElementTwoChoice<T, V>> withTwoComboBoxes(
+    public static <T, V> SelectorBuilder.TwoComboBoxesSelectorBuilder<T, V> withTwoComboBoxes(
             @NotNull Collection<T> mainCollection,
             @NotNull Collection<V> secondCollection) {
-        return withTwoComboBoxes(mainCollection, secondCollection, null, null, null, null);
-    }
-
-
-    public static <T, V> SelectorContainer<T, SelectorElementTwoChoice<T, V>> withTwoComboBoxes(
-            @NotNull Collection<T> mainCollection,
-            @NotNull Collection<V> secondCollection,
-            Function<T, String> mainNameFunction,
-            Collection<Function<T, String>> mainSearchFunctions,
-            Function<V, String> secondNameFunction,
-            Collection<Function<V, String>> secondSearchFunctions) {
-
-        return SelectorFactory.withTwoComboBoxes(mainCollection, secondCollection, mainNameFunction,
-                mainSearchFunctions, secondNameFunction, secondSearchFunctions);
+        return SelectorBuilder.withTwoComboBoxes(mainCollection, secondCollection);
     }
 
 
@@ -247,7 +189,7 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
         holderBuilder.searchButtonOptions.add(consumer);
     }
 
-    public SelectorContainer<T, E> addOnNodeElementValueChange(BiConsumer<E, T> option) {
+    public SelectorContainer<T, E> onNodeElementValueChange(BiConsumer<E, T> option) {
         this.holderBuilder.biOptions.add(option);
         return this;
     }
@@ -269,6 +211,20 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
             throw new NullPointerException();
         }
         searchDialog.getSearchPane().setTextFieldSearchBy(function, functions);
+    }
+
+    public void setSearchDialogNameByProperty(Function<T, ObservableValue<String>> function) {
+        if (function == null) {
+            throw new NullPointerException();
+        }
+        searchDialog.getSearchPane().setNameByProperty(function);
+    }
+
+    public void setSearchDialogSearchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
+        if (function == null) {
+            throw new NullPointerException();
+        }
+        searchDialog.getSearchPane().setTextFieldSearchByProperty(function, functions);
     }
 
     private void configAdding() {

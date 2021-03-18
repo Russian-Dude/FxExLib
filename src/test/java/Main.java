@@ -1,9 +1,10 @@
 import javafx.application.Application;
+import javafx.beans.Observable;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Scene;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -59,10 +60,14 @@ public class Main extends Application {
         te5.setCollection(new ArrayList<>());
         te1.setCollection(new ArrayList<>());
         List<TestClass> testClassList = List.of(te1, te2, te3, te4, te5, te6);
+        ObservableList<TestClass> testClassObservableList = FXCollections.observableArrayList(
+                testClass -> new Observable[] { testClass.stringProperty });
+        testClassObservableList.addAll(testClassList);
         SearchComboBox<TestClass> searchComboBox = new SearchComboBox<>();
-        searchComboBox.setCollection(List.of(te1, te2, te3, te4, te5, te6));
-        searchComboBox.setNameAndSearchBy(TestClass::getName);
-        searchComboBox.setSearchBy(TestClass::getName, testClass -> String.valueOf(testClass.getValue()));
+        searchComboBox.setCollection(testClassObservableList);
+        //searchComboBox.setNameAndSearchBy(TestClass::getName);
+        //searchComboBox.setSearchBy(TestClass::getName, testClass -> String.valueOf(testClass.getValue()));
+        searchComboBox.setNameByProperty(TestClass::stringPropertyProperty);
 
         mainPane.setMinWidth(300);
 
@@ -107,8 +112,11 @@ public class Main extends Application {
 /*        var selectorContainer = SelectorContainerDepr.withTwoComboBoxes(testClassList, List.of("1", "2", "3"));
         selectorContainer.addOption(c -> c.setNameAndSearchBy(TestClass::getName));*/
 
-        var selectorContainer = SelectorContainer.withAutocompletionTextField(testClassList, List.of("qwerty", "asdfgh"));
-        selectorContainer.addOption(e -> e.setSizePercentages(80, 20));
+        var selectorContainer =
+                SelectorContainer.withAutocompletionTextField(testClassObservableList, List.of("qwerty", "asdfgh"))
+                .sizePercentages(80, 20)
+                .nameByProperty(TestClass::stringPropertyProperty)
+                .get();
 
 /*        var selectorContainer = new SelectorContainerDepr<>(testClassList, SearchComboBox::new);
         selectorContainer.addOption(n -> n.setNameAndSearchBy(TestClass::getName));
@@ -132,6 +140,17 @@ public class Main extends Application {
         autocompletionTextField.setElementDescriptionFunction(t -> "(" + t.getValue() + ")");
         hBox.getChildren().add(autocompletionTextField);
 
+        hBox.getChildren().add(searchComboBox);
+
+        Button change1 = new Button("Change first");
+        Button change2 = new Button("Change second");
+        change1.setOnAction(event -> te1.stringProperty.set("changed"));
+        change2.setOnAction(event -> te2.stringProperty.set("changed"));
+
+        hBox.getChildren().addAll(change1, change2);
+
+        searchComboBox.setOnAction(event -> System.out.println(searchComboBox.getValue().name));
+
     }
 
     enum TestEnum { ONE, TWO, THREE, FOUR, FIVE }
@@ -145,6 +164,7 @@ public class Main extends Application {
         private List<String> collection;
         private Label label;
         private Image image;
+        private SimpleStringProperty stringProperty = new SimpleStringProperty("created");
 
         public TestClass(String name, int value, boolean isTrue) {
             this.name = name;
@@ -217,6 +237,18 @@ public class Main extends Application {
 
         public void setImage(Image image) {
             this.image = image;
+        }
+
+        public String getStringProperty() {
+            return stringProperty.get();
+        }
+
+        public SimpleStringProperty stringPropertyProperty() {
+            return stringProperty;
+        }
+
+        public void setStringProperty(String stringProperty) {
+            this.stringProperty.set(stringProperty);
         }
     }
 }

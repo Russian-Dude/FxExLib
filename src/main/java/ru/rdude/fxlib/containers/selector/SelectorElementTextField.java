@@ -2,6 +2,7 @@ package ru.rdude.fxlib.containers.selector;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -48,16 +49,32 @@ public class SelectorElementTextField<T> extends GridPane implements SelectorEle
         searchComboBox.setNameAndSearchBy(function);
     }
 
+    public void setNameAndSearchByProperty(Function<T, ObservableValue<String>> function) {
+        searchComboBox.setNameAndSearchByProperty(function);
+    }
+
     public void setSearchBy(Function<T, String> function, Function<T, String>... functions) {
         searchComboBox.setSearchBy(function, functions);
+    }
+
+    public void setSearchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
+        searchComboBox.setSearchByProperty(function, functions);
     }
 
     public void setSearchBy(Collection<Function<T, String>> functions) {
         searchComboBox.setSearchBy(functions);
     }
 
+    public void setSearchByProperty(Collection<Function<T, ObservableValue<String>>> functions) {
+        searchComboBox.setSearchByProperty(functions);
+    }
+
     public void setNameBy(Function<T, String> function) {
         searchComboBox.setNameBy(function);
+    }
+
+    public void setNameByProperty(Function<T, ObservableValue<String>> function) {
+        searchComboBox.setNameByProperty(function);
     }
 
     public void setSearchEnabled(boolean searchEnabled) {

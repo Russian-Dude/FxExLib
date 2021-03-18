@@ -1,7 +1,8 @@
 package ru.rdude.fxlib.panes;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.EventType;
@@ -14,16 +15,17 @@ import javafx.scene.layout.*;
 import javafx.scene.web.HTMLEditor;
 import javafx.util.StringConverter;
 import ru.rdude.fxlib.containers.selector.SelectorContainer;
+import utils.FunctionRawOrProperty;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * List View that can be filtered with complex filtering and complex tooltips for each element of the List View can be set.
@@ -91,13 +93,12 @@ public class SearchPane<T> extends Pane {
 
     private FilteredList<T> filteredList;
     private Map<Object, Predicate<T>> predicates;
-    private Set<Function<T, String>> searchTextFunctions;
-    private Function<T, String> nameByFunction;
+    private FunctionRawOrProperty<T, String> nameFunction;
+    private Set<FunctionRawOrProperty<T, String>> searchTextFunctions;
     private Function<T, Node> popupFunction;
     private Tooltip popup; // One popup for all list view cells for better performance
     private PopupBuilder popupBuilder;
     private PopupNodeHolder popupNodeHolder;
-    private Map<String, T> stringConverterMap;
     // creating this context menu to all elements instead of creating one for every element
     private ContextMenu elementsContextMenu;
     private T contextMenuRequester;
@@ -118,13 +119,32 @@ public class SearchPane<T> extends Pane {
         searchTextField = new TextField();
         searchTextFunctions = new HashSet<>();
         extraPane = new AnchorPane();
-        searchTextFunctions.add(Object::toString);
+        searchTextFunctions.add(FunctionRawOrProperty.raw(Object::toString));
         listVBox = new VBox(searchTextField, listView);
         VBox.setVgrow(listView, Priority.ALWAYS);
         listVBox.setSpacing(5d);
         mainHBox = new HBox(listVBox, extraPane);
         getChildren().add(mainHBox);
         initTextSearch();
+    }
+
+    @SafeVarargs
+    public final void setTextFieldSearchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
+        if (function == null) {
+            throw new NullPointerException();
+        }
+        Set<Function<T, ObservableValue<String>>> set = new HashSet<>();
+        set.add(function);
+        if (functions != null) {
+            set.addAll(Arrays.asList(functions));
+        }
+        setTextFieldSearchByProperty(set);
+    }
+
+    public void setTextFieldSearchByProperty(Collection<Function<T, ObservableValue<String>>> functions) {
+        searchTextFunctions = functions.stream()
+                .map(FunctionRawOrProperty::property)
+                .collect(Collectors.toSet());
     }
 
     @SafeVarargs
@@ -141,51 +161,25 @@ public class SearchPane<T> extends Pane {
     }
 
     public void setTextFieldSearchBy(Collection<Function<T, String>> functions) {
-        searchTextFunctions = new HashSet<>(functions);
+        searchTextFunctions = functions.stream()
+                .map(FunctionRawOrProperty::raw)
+                .collect(Collectors.toSet());
     }
 
     public void setNameBy(Function<T, String> function) {
-        nameByFunction = function;
-        stringConverterMap = new HashMap<>();
-        // listener for filtered list changes
-        filteredList.getSource().addListener((ListChangeListener<T>) change -> {
-            while (change.next()) {
-                if (change.wasAdded()) {
-                    change.getAddedSubList().forEach(t -> stringConverterMap.putIfAbsent(generateNameToByNameFunction(t), t));
-                } else if (change.wasRemoved()) {
-                    AtomicReference<String> lookingForName = new AtomicReference<>();
-                    change.getRemoved().forEach(t -> stringConverterMap.entrySet().stream()
-                            .filter(entry -> {
-                                if (entry.getValue() == t) {
-                                    lookingForName.set(entry.getKey());
-                                    return true;
-                                }
-                                return false;
-                            }).findFirst()
-                            .ifPresent(entry -> stringConverterMap.remove(lookingForName.get())));
-                }
-            }
-        });
-        // update stringConverterMap with presented elements
-        for (T t : filteredList) {
-            String name = generateNameToByNameFunction(t);
-            stringConverterMap.put(name, t);
+        if (function == null) {
+            throw new NullPointerException();
         }
+        nameFunction = FunctionRawOrProperty.raw(function);
         updateCellFactory();
     }
 
-    private String generateNameToByNameFunction(T t) {
-        String name = nameByFunction.apply(t);
-        if (stringConverterMap.containsKey(name)) {
-            String newName = name;
-            int sameNames = 0;
-            while (stringConverterMap.containsKey(newName)) {
-                sameNames++;
-                newName = name + " (" + sameNames + ")";
-            }
-            name = newName;
+    public void setNameByProperty(Function<T, ObservableValue<String>> function) {
+        if (function == null) {
+            throw new NullPointerException();
         }
-        return name;
+        nameFunction = FunctionRawOrProperty.property(function);
+        updateCellFactory();
     }
 
     public void setPopupFunction(Function<T, Node> function) {
@@ -270,16 +264,13 @@ public class SearchPane<T> extends Pane {
                 } else {
                     result = ((ValueProvider<?>) control).getValue().equals(value);
                 }
-            }
-            else if (control instanceof SelectorContainer) {
+            } else if (control instanceof SelectorContainer) {
                 if (value instanceof Collection) {
                     result = ((Collection<?>) value).containsAll(((SelectorContainer<?, ?>) control).getSelected());
-                }
-                else {
+                } else {
                     result = ((SelectorContainer<?, ?>) control).getSelected().contains(value);
                 }
-            }
-            else {
+            } else {
                 throw new IllegalArgumentException("Controls can only be be instances of: " +
                         "TextInputControl, ComboBoxBase, ChoiceBox, HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider. " +
                         "Control creating this exception is: " + control.getClass());
@@ -468,26 +459,17 @@ public class SearchPane<T> extends Pane {
         listView.setCellFactory(lv -> {
             TextFieldListCell<T> cell = new TextFieldListCell<T>();
             // set name by:
-            if (nameByFunction != null) {
-                cell.setConverter(new StringConverter<T>() {
-                    @Override
-                    public String toString(T t) {
-                        if (t == null) {
-                            return "";
-                        }
-                        return stringConverterMap.entrySet().stream()
-                                .filter(entry -> entry.getValue() == t)
-                                .map(Map.Entry::getKey)
-                                .findFirst()
-                                .orElse("");
-                    }
+            cell.setConverter(new StringConverter<>() {
+                @Override
+                public String toString(T t) {
+                    return nameFunction != null ? nameFunction.apply(t) : null;
+                }
 
-                    @Override
-                    public T fromString(String s) {
-                        return stringConverterMap.get(s);
-                    }
-                });
-            }
+                @Override
+                public T fromString(String s) {
+                    return null;
+                }
+            });
             // set popup:
             if ((popupFunction != null || popupNodeHolder != null) && popup != null) {
                 cell.hoverProperty().addListener((observableValue, oldV, newV) -> {

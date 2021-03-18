@@ -1,5 +1,6 @@
 package ru.rdude.fxlib.boxes;
 
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -8,9 +9,11 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.util.StringConverter;
 import ru.rdude.fxlib.containers.selector.SelectorElementNode;
+import utils.FunctionRawOrProperty;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Extended version of ComboBox.
@@ -27,8 +30,7 @@ public class SearchComboBox<T> extends ComboBox<T> implements SelectorElementNod
 
     private FilteredList<T> filteredList;
     private boolean isTyped;
-    private Set<Function<T, String>> getElementSearchFunctions;
-    private Map<String, T> stringConverterMap;
+    private Set<FunctionRawOrProperty<T, String>> searchFunctions;
     private boolean searchEnabled = true;
 
 
@@ -41,7 +43,7 @@ public class SearchComboBox<T> extends ComboBox<T> implements SelectorElementNod
         initShowListener();
         setCollection(items);
         isTyped = false;
-        getElementSearchFunctions = Set.of(Object::toString);
+        searchFunctions = Set.of(FunctionRawOrProperty.raw(Object::toString));
     }
 
     public void setCollection(Collection<T> collection) {
@@ -67,6 +69,11 @@ public class SearchComboBox<T> extends ComboBox<T> implements SelectorElementNod
         setNameBy(function);
     }
 
+    public void setNameAndSearchByProperty(Function<T, ObservableValue<String>> function) {
+        setSearchByProperty(function);
+        setNameByProperty(function);
+    }
+
     @SuppressWarnings(value = "varargs")
     public void setSearchBy(Function<T, String> function, Function<T, String>... functions) {
         if (function == null) {
@@ -81,46 +88,61 @@ public class SearchComboBox<T> extends ComboBox<T> implements SelectorElementNod
     }
 
     public void setSearchBy(Collection<Function<T, String>> functions) {
-        this.getElementSearchFunctions = new HashSet<>(functions);
+        this.searchFunctions = functions.stream()
+                .map(FunctionRawOrProperty::raw)
+                .collect(Collectors.toSet());
+    }
+
+    public void setSearchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
+        if (function == null) {
+            throw new NullPointerException();
+        }
+        Set<Function<T, ObservableValue<String>>> set = new HashSet<>();
+        set.add(function);
+        if (functions != null) {
+            set.addAll(Arrays.asList(functions));
+        }
+        setSearchByProperty(set);
+    }
+
+    public void setSearchByProperty(Collection<Function<T, ObservableValue<String>>> functions) {
+        this.searchFunctions = functions.stream()
+                .map(FunctionRawOrProperty::property)
+                .collect(Collectors.toSet());
     }
 
     public void setNameBy(Function<T, String> function) {
         if (function == null) {
             throw new NullPointerException();
         }
-        stringConverterMap = new HashMap<>();
-        for (T t : filteredList) {
-            String name = function.apply(t);
-            if (stringConverterMap.containsKey(name)) {
-                String newName = name;
-                int sameNames = 0;
-                while (stringConverterMap.containsKey(newName)) {
-                    sameNames++;
-                    newName = name + " (" + sameNames + ")";
-                }
-                name = newName;
-            }
-            stringConverterMap.put(name, t);
-        }
-        StringConverter<T> stringConverter = new StringConverter<T>() {
+        setConverter(new StringConverter<T>() {
             @Override
             public String toString(T t) {
-                if (t == null) {
-                    return "";
-                }
-                return stringConverterMap.entrySet().stream()
-                        .filter(entry -> entry.getValue() == t)
-                        .map(Map.Entry::getKey)
-                        .findFirst()
-                        .orElse("");
+                return t != null ? function.apply(t) : null;
             }
 
             @Override
             public T fromString(String s) {
-                return stringConverterMap.get(s);
+                return null;
             }
-        };
-        setConverter(stringConverter);
+        });
+    }
+
+    public void setNameByProperty(Function<T, ObservableValue<String>> function) {
+        if (function == null) {
+            throw new NullPointerException();
+        }
+        setConverter(new StringConverter<T>() {
+            @Override
+            public String toString(T t) {
+                return t != null ? function.apply(t).getValue() : null;
+            }
+
+            @Override
+            public T fromString(String s) {
+                return null;
+            }
+        });
     }
 
 
@@ -137,7 +159,7 @@ public class SearchComboBox<T> extends ComboBox<T> implements SelectorElementNod
             if (isTyped) {
                 isTyped = false;
                 if (!newV.isEmpty() && isShowing() && isEditable()) {
-                    filteredList.setPredicate(e -> getElementSearchFunctions.stream()
+                    filteredList.setPredicate(e -> searchFunctions.stream()
                             .anyMatch(func -> func.apply(e).toLowerCase().contains(newV.toLowerCase())));
                 } else {
                     filteredList.setPredicate(e -> true);
