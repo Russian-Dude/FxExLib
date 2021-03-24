@@ -11,6 +11,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldListCell;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.web.HTMLEditor;
 import javafx.util.StringConverter;
@@ -95,6 +97,9 @@ public class SearchPane<T> extends Pane {
     private Map<Object, Predicate<T>> predicates;
     private FunctionRawOrProperty<T, String> nameFunction;
     private Set<FunctionRawOrProperty<T, String>> searchTextFunctions;
+    private Function<T, Image> iconFunction;
+    private double iconWidth = 25d;
+    private double iconHeight = 25d;
     private Function<T, Node> popupFunction;
     private Tooltip popup; // One popup for all list view cells for better performance
     private PopupBuilder popupBuilder;
@@ -436,6 +441,17 @@ public class SearchPane<T> extends Pane {
         return popupBuilder;
     }
 
+    public void setIcon(Function<T, Image> iconFunction) {
+        setIcon(iconFunction, 25d, 25d);
+    }
+
+    public void setIcon(Function<T, Image> iconFunction, double width, double height) {
+        this.iconFunction = iconFunction;
+        this.iconWidth = width;
+        this.iconHeight = height;
+        updateCellFactory();
+    }
+
     private void initTextSearch() {
         searchTextField.textProperty().addListener((observableValue, oldV, newV) -> {
             predicates.put(searchTextField, t -> searchTextFunctions.stream()
@@ -457,19 +473,28 @@ public class SearchPane<T> extends Pane {
 
     void updateCellFactory() {
         listView.setCellFactory(lv -> {
-            TextFieldListCell<T> cell = new TextFieldListCell<T>();
-            // set name by:
-            cell.setConverter(new StringConverter<>() {
+            ListCell<T> cell = new ListCell<>() {
+                ImageView imageView = new ImageView();
                 @Override
-                public String toString(T t) {
-                    return nameFunction != null ? nameFunction.apply(t) : null;
+                protected void updateItem(T t, boolean empty) {
+                    super.updateItem(t, empty);
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    }
+                    else {
+                        // set icon
+                        if (iconFunction != null) {
+                            imageView.setFitWidth(iconWidth);
+                            imageView.setFitHeight(iconHeight);
+                            imageView.setImage(iconFunction.apply(t));
+                            setGraphic(imageView);
+                        }
+                        // set name by:
+                        setText(nameFunction.apply(t));
+                    }
                 }
-
-                @Override
-                public T fromString(String s) {
-                    return null;
-                }
-            });
+            };
             // set popup:
             if ((popupFunction != null || popupNodeHolder != null) && popup != null) {
                 cell.hoverProperty().addListener((observableValue, oldV, newV) -> {
@@ -491,7 +516,7 @@ public class SearchPane<T> extends Pane {
         });
     }
 
-    private void showPopup(TextFieldListCell<T> cell) {
+    private void showPopup(ListCell<T> cell) {
         if (popupFunction != null) {
             Node popupNode = popupFunction.apply(cell.getItem());
             popup.setGraphic(popupNode);
@@ -523,7 +548,7 @@ public class SearchPane<T> extends Pane {
             popupFunction = null;
         }
 
-        void applyToCell(TextFieldListCell<T> cell) {
+        void applyToCell(ListCell<T> cell) {
             textFunctions.forEach((label, function) -> label.setText(function.apply(cell.getItem())));
             nodeFunctions.forEach((node, function) -> {
                 Node newNode = function.apply(cell.getItem());
