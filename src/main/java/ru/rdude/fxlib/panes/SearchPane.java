@@ -1,6 +1,5 @@
 package ru.rdude.fxlib.panes;
 
-import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -10,12 +9,10 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.TextFieldListCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.web.HTMLEditor;
-import javafx.util.StringConverter;
 import ru.rdude.fxlib.containers.selector.SelectorContainer;
 import utils.FunctionRawOrProperty;
 
@@ -434,6 +431,14 @@ public class SearchPane<T> extends Pane {
         elementsContextMenu.getItems().add(menuItem);
     }
 
+    public void addContextMenu(String name, Consumer<SearchPaneMenuItem> children) {
+        Menu menu = new Menu(name);
+        SearchPaneMenuItem searchPaneMenuItem = new SearchPaneMenuItem(new ArrayList<>());
+        children.accept(searchPaneMenuItem);
+        menu.getItems().addAll(searchPaneMenuItem.list);
+        elementsContextMenu.getItems().add(menu);
+    }
+
     public PopupBuilder popupBuilder() {
         if (popupBuilder == null) {
             popupBuilder = new PopupBuilder();
@@ -560,6 +565,41 @@ public class SearchPane<T> extends Pane {
             });
         }
 
+    }
+
+
+    public class SearchPaneMenuItem {
+
+        private final List<MenuItem> list;
+
+        private SearchPaneMenuItem(List<MenuItem> list) {
+            this.list = list;
+        }
+
+        public void menuItem(String name, Consumer<T> consumer) {
+            if (elementsContextMenu == null) {
+                elementsContextMenu = new ContextMenu();
+            }
+            MenuItem menuItem = new MenuItem(name);
+            menuItem.setOnAction(event -> {
+                if (contextMenuRequester != null) {
+                    consumer.accept(contextMenuRequester);
+                    contextMenuRequester = null;
+                }
+            });
+            list.add(menuItem);
+        }
+
+        public void parentMenu(String name, Consumer<SearchPaneMenuItem> children) {
+            if (elementsContextMenu == null) {
+                elementsContextMenu = new ContextMenu();
+            }
+            Menu menu = new Menu(name);
+            SearchPaneMenuItem searchPaneMenuItem = new SearchPaneMenuItem(new ArrayList<>());
+            children.accept(searchPaneMenuItem);
+            menu.getItems().addAll(searchPaneMenuItem.list);
+            list.add(menu);
+        }
     }
 
     public class PopupBuilder {
