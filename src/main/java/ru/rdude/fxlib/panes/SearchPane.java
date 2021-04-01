@@ -21,9 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 import java.util.stream.Collectors;
 
 /**
@@ -94,9 +92,7 @@ public class SearchPane<T> extends Pane {
     private Map<Object, Predicate<T>> predicates;
     private FunctionRawOrProperty<T, String> nameFunction;
     private Set<FunctionRawOrProperty<T, String>> searchTextFunctions;
-    private Function<T, Image> iconFunction;
-    private double iconWidth = 25d;
-    private double iconHeight = 25d;
+    private CustomCellGraphic<? extends Node> customCellGraphic;
     private Function<T, Node> popupFunction;
     private Tooltip popup; // One popup for all list view cells for better performance
     private PopupBuilder popupBuilder;
@@ -451,9 +447,19 @@ public class SearchPane<T> extends Pane {
     }
 
     public void setIcon(Function<T, Image> iconFunction, double width, double height) {
-        this.iconFunction = iconFunction;
-        this.iconWidth = width;
-        this.iconHeight = height;
+        customCellGraphic = new CustomCellGraphic<>(
+                () -> {
+                    ImageView imageView = new ImageView();
+                    imageView.setFitWidth(width);
+                    imageView.setFitHeight(height);
+                    return imageView;
+                },
+                (t, view) -> view.setImage(iconFunction.apply(t)));
+        updateCellFactory();
+    }
+
+    public <N extends Node> void setCellGraphic(Supplier<N> creator, BiConsumer<T, N> updater) {
+        customCellGraphic = new CustomCellGraphic<>(creator, updater);
         updateCellFactory();
     }
 
@@ -479,7 +485,7 @@ public class SearchPane<T> extends Pane {
     void updateCellFactory() {
         listView.setCellFactory(lv -> {
             ListCell<T> cell = new ListCell<>() {
-                ImageView imageView = new ImageView();
+                Node customGraphic = customCellGraphic.creator.get();
                 @Override
                 protected void updateItem(T t, boolean empty) {
                     super.updateItem(t, empty);
@@ -488,12 +494,10 @@ public class SearchPane<T> extends Pane {
                         setGraphic(null);
                     }
                     else {
-                        // set icon
-                        if (iconFunction != null) {
-                            imageView.setFitWidth(iconWidth);
-                            imageView.setFitHeight(iconHeight);
-                            imageView.setImage(iconFunction.apply(t));
-                            setGraphic(imageView);
+                        // set graphic
+                        if (customCellGraphic != null) {
+                            customCellGraphic.update(t, customGraphic);
+                            setGraphic(customGraphic);
                         }
                         // set name by:
                         setText(nameFunction.apply(t));
@@ -599,6 +603,21 @@ public class SearchPane<T> extends Pane {
             children.accept(searchPaneMenuItem);
             menu.getItems().addAll(searchPaneMenuItem.list);
             list.add(menu);
+        }
+    }
+
+    public class CustomCellGraphic<N extends Node> {
+
+        Supplier<N> creator;
+        BiConsumer<T, N> updater;
+
+        private CustomCellGraphic(Supplier<N> creator, BiConsumer<T, N> updater) {
+            this.creator = creator;
+            this.updater = updater;
+        }
+
+        void update(T t, Node n) {
+            updater.accept(t, (N) n);
         }
     }
 
