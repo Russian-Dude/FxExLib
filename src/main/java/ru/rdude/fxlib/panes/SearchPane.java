@@ -2,6 +2,7 @@ package ru.rdude.fxlib.panes;
 
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.EventType;
@@ -12,7 +13,6 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.web.HTMLEditor;
 import ru.rdude.fxlib.containers.selector.SelectorContainer;
 import utils.FunctionRawOrProperty;
 
@@ -25,7 +25,7 @@ import java.util.function.*;
 import java.util.stream.Collectors;
 
 /**
- * List View that can be filtered with complex filtering and complex tooltips for each element of the List View can be set.
+ * List View that can be filtered with complex filtering. Also complex tooltips for each element of the List View can be set.
  * Naming of elements represented in list view can be set by passing a function to setNameBy method. Default is Object::toString.
  * By default there is a TextField on the top of the list. Input text of this text field is used to filter
  * list, applying one or more search functions on elements of the list.
@@ -36,21 +36,20 @@ import java.util.stream.Collectors;
  * Search will work based on provided Controls:
  * </p>
  * <p>
- * TextInputControl, HTMLEditor:
+ * TextInputControl:
  * If linked Function returns a Collection, checks if collection values after applying toString to them
  * contains control text .
+ * Else if function returns number checks if text field can be parsed and be equal to the number value.
  * Else checks if function return value after applying toString equals to control text.
  * </p>
  * <p>
- * ComboBox, ChoiceBox, Spinner, ValueProvider:
+ * ComboBox, ChoiceBox, Spinner:
  * If linked Function returns a Collection, checks if collection contains selected value.
  * Else checks if function return value equals to selected value.
  * </p>
  * <p>
  * CheckBox:
- * If linked function returns a Collection, checks if collection values after applying toString to them
- * contains control text.
- * Else if function returns a boolean, checks if this boolean equals to isSelected of the check box.
+ * If function returns a boolean, checks if this boolean equals to isSelected of the check box.
  * If boolean returns null, result will be true
  * Else checks if function return value after applying toString equals control text.
  * </p>
@@ -189,103 +188,251 @@ public class SearchPane<T> extends Pane {
         updateCellFactory();
     }
 
-
     public void addSearchOption(Control control, Function<T, ?> getter) {
-        predicates.put(control, (t) -> {
-            Object value = getter.apply(t);
-            boolean result = false;
-            if (control instanceof TextInputControl) {
-                result = ((String) value).contains(((TextInputControl) control).getText());
-            } else if (control instanceof ComboBoxBase) {
-                Object controlValue = ((ComboBoxBase<?>) control).getValue();
-                if (controlValue == null) {
-                    result = true;
-                } else {
-                    result = controlValue.equals(value);
-                }
-            } else if (control instanceof ChoiceBox) {
-                Object controlValue = ((ChoiceBox<?>) control).getValue();
-                if (controlValue == null) {
-                    result = true;
-                } else if (value instanceof Collection) {
-                    result = ((Collection<?>) value).contains(((ChoiceBox<?>) control).getValue());
-                } else {
-                    result = controlValue.equals(value);
-                }
-            } else if (control instanceof HTMLEditor) {
-                result = ((String) value).contains(((HTMLEditor) control).getHtmlText());
-            } else if (control instanceof Spinner) {
-                result = ((Spinner<?>) control).getValue().equals(value);
-            } else if (control instanceof CheckBox) {
+        if (control == null) {
+            throw new NullPointerException("Control must not be null");
+        }
+        Predicate<T> predicate = null;
+
+        // text fields
+        if (control instanceof TextInputControl) {
+            ((TextInputControl) control).textProperty().addListener((obs, o, n) -> updateSearch());
+            predicate = t -> {
+                Object value = getter.apply(t);
+
                 if (value == null) {
-                    result = true;
+                    return true;
                 }
-                Boolean boolValue = null;
-                try {
-                    boolValue = (boolean) value;
-                } catch (Exception ignore) {
-                }
-                if (boolValue != null && value != null) {
-                    result = ((CheckBox) control).isSelected() == boolValue;
-                } else if (value instanceof Collection) {
-                    String checkBoxText = ((CheckBox) control).getText();
-                    result = ((Collection<?>) value).stream().map(Object::toString).anyMatch(s -> s.equals(checkBoxText));
-                } else if (value != null) {
-                    // unreachable
-                    result = ((CheckBox) control).getText().equals(value.toString());
-                }
-            } else if (control instanceof RadioButton) {
-                Boolean boolValue = null;
-                try {
-                    boolValue = (boolean) value;
-                } catch (Exception ignore) {
-                }
-                if (boolValue != null) {
-                    if (((RadioButton) control).isSelected()) {
-                        result = ((RadioButton) control).isSelected() == boolValue;
-                    } else {
-                        result = true;
+                else if (value instanceof ObservableValue) {
+                    value = ((ObservableValue<?>) value).getValue();
+                    if (value == null) {
+                        return true;
                     }
-                } else if (((RadioButton) control).isSelected()) {
-                    if (value instanceof Collection) {
-                        String radioButtonText = ((RadioButton) control).getText();
-                        result = ((Collection<?>) value).stream().map(Object::toString).anyMatch(s -> s.equals(radioButtonText));
-                    } else {
-                        result = ((RadioButton) control).getText().equals(value.toString());
+                }
+
+
+                if (value instanceof String) {
+                    return ((String) value).contains(((TextInputControl) control).getText());
+                }
+
+                else if (value instanceof Number) {
+                    final String text = ((TextInputControl) control).getText();
+                    if (value instanceof Long) {
+                        if (text.matches("\\d+")) {
+                            return value.equals(Long.parseLong(text));
+                        } else {
+                            return false;
+                        }
                     }
-                } else {
-                    result = true;
+                    else if (value instanceof Integer) {
+                        if (text.matches("\\d+")) {
+                            return value.equals(Integer.parseInt(text));
+                        } else {
+                            return false;
+                        }
+                    }
+                    else if (value instanceof Short) {
+                        if (text.matches("\\d+")) {
+                            return value.equals(Short.parseShort(text));
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                    else if (value instanceof Byte) {
+                        if (text.matches("\\d+")) {
+                            return value.equals(Byte.parseByte(text));
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                    else if (value instanceof Double) {
+                        if (text.matches("\\d+(\\.\\d+)*")) {
+                            return value.equals(Double.parseDouble(text));
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                    else if (value instanceof Float) {
+                        if (text.matches("\\d+(\\.\\d+)*")) {
+                            return value.equals(Float.parseFloat(text));
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                    else {
+                        return false;
+                    }
                 }
-            } else if (control instanceof ValueProvider) {
-                if (((ValueProvider) control).getValue() instanceof Collection) {
-                    result = ((Collection<?>) value).containsAll((Collection<?>) ((ValueProvider<?>) control).getValue());
-                } else {
-                    result = ((ValueProvider<?>) control).getValue().equals(value);
+
+                else if (value instanceof Boolean) {
+                    return (boolean) value;
                 }
-            } else if (control instanceof SelectorContainer) {
+
+                else {
+                    return value.toString().contains(((TextInputControl) control).getText());
+                }
+            };
+        }
+
+        // combo boxes
+        else if (control instanceof ComboBoxBase) {
+            ((ComboBoxBase<?>) control).valueProperty().addListener((v, o, n) -> updateSearch());
+            predicate = t -> {
+                Object value = getter.apply(t);
+                if (value instanceof ObservableValue) {
+                    value = ((ObservableValue<?>) value).getValue();
+                }
+                if (((ComboBoxBase<?>) control).getValue() == null) {
+                    return true;
+                }
+                else if (value instanceof Collection) {
+                    return ((Collection<?>) value).contains(((ComboBoxBase<?>) control).getValue());
+                }
+                else {
+                    return ((ComboBoxBase<?>) control).getValue().equals(value);
+                }
+            };
+        }
+
+        // choice box
+        else if (control instanceof ChoiceBox) {
+            ((ChoiceBox<?>) control).valueProperty().addListener((v, o, n) -> updateSearch());
+            predicate = t -> {
+                Object value = getter.apply(t);
+                if (value instanceof ObservableValue) {
+                    value = ((ObservableValue<?>) value).getValue();
+                }
+                if (((ChoiceBox<?>) control).getValue() == null) {
+                    return true;
+                }
+                else if (value instanceof Collection) {
+                    return ((Collection<?>) value).contains(((ChoiceBox<?>) control).getValue());
+                }
+                else {
+                    return ((ChoiceBox<?>) control).getValue().equals(value);
+                }
+            };
+        }
+
+        // spinner
+        else if (control instanceof Spinner) {
+            ((Spinner<?>) control).valueProperty().addListener((v, o, n) -> updateSearch());
+            predicate = t -> {
+                Object value = getter.apply(t);
+                if (value instanceof ObservableValue) {
+                    value = ((ObservableValue<?>) value).getValue();
+                }
+                if (((Spinner<?>) control).getValue() == null) {
+                    return true;
+                }
+                else if (value instanceof Collection) {
+                    return ((Collection<?>) value).contains(((Spinner<?>) control).getValue());
+                }
+                else {
+                    return ((Spinner<?>) control).getValue().equals(value);
+                }
+            };
+        }
+
+        // checkbox
+        else if (control instanceof CheckBox) {
+            ((CheckBox) control).selectedProperty().addListener((v, o, n) -> updateSearch());
+            predicate = t -> {
+                Object value = getter.apply(t);
+                if (value == null) {
+                    return true;
+                }
+                else if (value instanceof ObservableValue) {
+                    value = ((ObservableValue<?>) value).getValue();
+                    if (value == null) {
+                        return true;
+                    }
+                }
+                if (value instanceof Boolean) {
+                    return (Boolean) value == ((CheckBox) control).isSelected();
+                }
+                else {
+                    return value.toString().equals(((CheckBox) control).getText());
+                }
+            };
+        }
+
+        // radio button
+        else if (control instanceof RadioButton) {
+            ((RadioButton) control).selectedProperty().addListener((v, o, n) -> updateSearch());
+            predicate = t -> {
+                if (!((RadioButton) control).isSelected()) {
+                    return true;
+                }
+                else {
+                    Object value = getter.apply(t);
+                    if (value == null) {
+                        return true;
+                    }
+                    else if (value instanceof ObservableValue) {
+                        value = ((ObservableValue<?>) value).getValue();
+                        if (value == null) {
+                            return true;
+                        }
+                    }
+                    if (value instanceof Boolean) {
+                        return ((Boolean) value) == ((RadioButton) control).isSelected();
+                    }
+                    else {
+                        return value.toString().equals(((RadioButton) control).getText());
+                    }
+                }
+            };
+        }
+
+        // selector container
+        else if (control instanceof SelectorContainer) {
+            ((SelectorContainer<?, ?>) control).getItems().addListener((ListChangeListener<Object>) change -> {
+                if (change.next()) {
+                    updateSearch();
+                }
+            });
+            predicate = t -> {
+                Object value = getter.apply(t);
+                if (value instanceof ObservableValue) {
+                    value = ((ObservableValue<?>) value).getValue();
+                }
                 if (value instanceof Collection) {
-                    result = ((Collection<?>) value).containsAll(((SelectorContainer<?, ?>) control).getSelected());
-                } else {
-                    result = ((SelectorContainer<?, ?>) control).getSelected().contains(value);
+                    if (((SelectorContainer<?, ?>) control).getItems().isEmpty()) {
+                        return true;
+                    }
+                    else {
+                        try {
+                            return ((Collection<?>) value).containsAll(((SelectorContainer<?, ?>) control).getItems());
+                        }
+                        catch (ClassCastException | NullPointerException exception) {
+                            return true;
+                        }
+                    }
                 }
-            } else {
-                throw new IllegalArgumentException("Controls can only be be instances of: " +
-                        "TextInputControl, ComboBoxBase, ChoiceBox, HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider. " +
-                        "Control creating this exception is: " + control.getClass());
-            }
-            return result;
-        });
-        control.addEventHandler(EventType.ROOT, (event) -> updateSearch());
+                else {
+                    return ((SelectorContainer<?, ?>) control).getItems().contains(value);
+                }
+            };
+        }
+
+        if (predicate != null) {
+            predicates.put(control, predicate);
+        }
     }
 
     /**
      * Link controls to T methods.
      * Controls can only be be instances of: TextInputControl, ComboBoxBase, ChoiceBox,
-     * HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider.
+     * CheckBox, RadioButton, Spinner.
      *
      * @param functionMap this map link controls with T object functions.
      * @throws IllegalArgumentException if control is not instance of TextInputControl, ComboBoxBase, ChoiceBox,
-     *                                  HTMLEditor, CheckBox, RadioButton, Spinner or ValueProvider.
+     *                                  HTMLEditor, CheckBox, RadioButton, Spinner.
      */
     public void addSearchOptions(Map<Control, Function<T, ?>> functionMap) {
         functionMap.forEach((this::addSearchOption));
@@ -486,14 +633,14 @@ public class SearchPane<T> extends Pane {
         listView.setCellFactory(lv -> {
             ListCell<T> cell = new ListCell<>() {
                 Node customGraphic = customGraphicOrNull();
+
                 @Override
                 protected void updateItem(T t, boolean empty) {
                     super.updateItem(t, empty);
                     if (empty) {
                         setText(null);
                         setGraphic(null);
-                    }
-                    else {
+                    } else {
                         // set graphic
                         if (customCellGraphic != null) {
                             customCellGraphic.update(t, customGraphic);
