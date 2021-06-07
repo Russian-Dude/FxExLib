@@ -37,7 +37,7 @@ public class SelectorBuilder {
 
 
 
-    static abstract class SelectorBuilderType<T, E extends Node & SelectorElementNode<T>> {
+    public static abstract class SelectorBuilderType<T, E extends Node & SelectorElementNode<T>> {
         final SelectorContainer<T, E> selectorContainer;
 
         private SelectorBuilderType(Collection<T> elements, Supplier<E> elementNodeCreator) {

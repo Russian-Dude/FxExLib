@@ -485,7 +485,7 @@ public class SearchPane<T> extends Pane {
     void updateCellFactory() {
         listView.setCellFactory(lv -> {
             ListCell<T> cell = new ListCell<>() {
-                Node customGraphic = customCellGraphic.creator.get();
+                Node customGraphic = customGraphicOrNull();
                 @Override
                 protected void updateItem(T t, boolean empty) {
                     super.updateItem(t, empty);
@@ -502,6 +502,14 @@ public class SearchPane<T> extends Pane {
                         // set name by:
                         setText(nameFunction.apply(t));
                     }
+                }
+
+                private Node customGraphicOrNull() {
+                    Node n = null;
+                    if (customCellGraphic != null && customCellGraphic.creator != null) {
+                        n = customCellGraphic.creator.get();
+                    }
+                    return n;
                 }
             };
             // set popup:
