@@ -1,5 +1,6 @@
 package ru.rdude.fxlib.containers.selector;
 
+import com.sun.javafx.collections.ObservableListWrapper;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -16,9 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import ru.rdude.fxlib.boxes.SearchComboBox;
 import ru.rdude.fxlib.dialogs.SearchDialog;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.function.*;
 import java.util.stream.Collectors;
 
@@ -26,6 +25,7 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
 
     private ObservableList<T> elements;
     private final Supplier<E> elementNodeCreator;
+    private final SelectorContainerObservableList selectedElements = new SelectorContainerObservableList(new ArrayList<>());
     private final ObservableList<ElementHolder> selectedElementsNodes = FXCollections.observableArrayList();
     private final BooleanProperty unique = new SimpleBooleanProperty(true);
     private final ElementHolderBuilder holderBuilder = new ElementHolderBuilder();
@@ -93,46 +93,46 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
     }
 
     public void clear() {
-        selectedElementsNodes.clear();
+        selectedElements.clear();
     }
 
     public E add(T t) {
-        ElementHolder holder = holderBuilder.create(t);
-        selectedElementsNodes.add(holder);
-        return holder.elementNode;
+        return selectedElements.addAndReturnHolder(t);
     }
 
-    public void addAll(Collection<T> values) {
-        values.forEach(this::add);
+    public boolean addAll(Collection<T> values) {
+        return selectedElements.addAll(values);
     }
 
     public void removeFirst(T t) {
-        selectedElementsNodes.stream()
-                .filter(holder -> holder.getValue().equals(t))
-                .findFirst()
-                .ifPresent(this::remove);
+        selectedElements.removeFirst(t);
     }
 
     private void remove(ElementHolder holder) {
-        selectedElementsNodes.remove(holder);
+        final int index = selectedElementsNodes.indexOf(holder);
+        if (index >= 0) {
+            selectedElements.remove(index);
+        }
     }
 
     public List<T> getSelected() {
-        return selectedElementsNodes.stream()
-                .map(ElementHolder::getValue)
-                .collect(Collectors.toList());
+        return new ArrayList<>(selectedElements);
     }
 
     public Collection<T> getSelected(Supplier<Collection<T>> collectionSupplier) {
-        return selectedElementsNodes.stream()
-                .map(ElementHolder::getValue)
-                .collect(Collectors.toCollection(collectionSupplier));
+        final Collection<T> collection = collectionSupplier.get();
+        collection.addAll(selectedElements);
+        return collection;
     }
 
     public List<E> getSelectedElementsNodes() {
         return selectedElementsNodes.stream()
                 .map(n -> n.elementNode)
                 .collect(Collectors.toList());
+    }
+
+    public ObservableList<T> getItems() {
+        return selectedElements;
     }
 
     public boolean isUnique() {
@@ -255,6 +255,146 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
                 t -> t.equals(elementHolder.getValue()) || selectedElementsNodes.stream().map(ElementHolder::getValue).noneMatch(t::equals));
         elementHolder.setValue(storedValue);
         elementHolder.userChangeValue = true;
+    }
+
+    private class SelectorContainerObservableList extends SimpleListProperty<T> {
+
+        public SelectorContainerObservableList(List<T> list) {
+            super(FXCollections.observableArrayList(list));
+        }
+
+        @Override
+        public void clear() {
+            super.clear();
+            selectedElementsNodes.clear();
+        }
+
+        @Override
+        public void remove(int i, int i1) {
+            super.remove(i, i1);
+            selectedElementsNodes.remove(i, i1);
+        }
+
+        @Override
+        public boolean removeAll(Collection<?> collection) {
+            super.removeAll(collection);
+            return selectedElementsNodes.removeIf(holder -> collection.contains(holder.getValue()));
+        }
+
+        @Override
+        public boolean retainAll(Collection<?> collection) {
+            super.retainAll(collection);
+            final List<ElementHolder> retain = selectedElementsNodes.stream()
+                    .filter(holder -> collection.contains(holder.getValue()))
+                    .collect(Collectors.toList());
+            return selectedElementsNodes.retainAll(retain);
+        }
+
+        @Override
+        public boolean setAll(Collection<? extends T> collection) {
+            super.setAll(collection);
+            selectedElementsNodes.clear();
+            final List<ElementHolder> add = collection.stream()
+                    .map(holderBuilder::create)
+                    .collect(Collectors.toList());
+            return selectedElementsNodes.addAll(add);
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends T> collection) {
+            super.addAll(collection);
+            final List<ElementHolder> add = collection.stream()
+                    .map(holderBuilder::create)
+                    .collect(Collectors.toList());
+            return selectedElementsNodes.addAll(add);
+        }
+
+        @Override
+        public boolean addAll(int i, Collection<? extends T> collection) {
+            super.addAll(i, collection);
+            final List<ElementHolder> add = collection.stream()
+                    .map(holderBuilder::create)
+                    .collect(Collectors.toList());
+            return selectedElementsNodes.addAll(i, add);
+        }
+
+        @Override
+        public void add(int i, T t) {
+            super.add(i, t);
+            selectedElementsNodes.add(i, holderBuilder.create(t));
+        }
+
+        @Override
+        public T set(int i, T t) {
+            T was = super.set(i, t);
+            selectedElementsNodes.set(i, holderBuilder.create(t));
+            return was;
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            boolean removed = super.remove(o);
+            if (removed && o != null) {
+                selectedElementsNodes.removeIf(holder -> o.equals(holder.getValue()));
+            }
+            return removed;
+        }
+
+        @Override
+        public T remove(int i) {
+            T res = super.remove(i);
+            if (res != null) {
+                selectedElementsNodes.remove(i);
+            }
+            return res;
+        }
+
+        public void removeFirst(T t) {
+            final T remove = this.stream()
+                    .filter(t1 -> t1.equals(t))
+                    .findFirst()
+                    .orElse(null);
+            if (remove != null) {
+                super.remove(t);
+                selectedElementsNodes.stream()
+                        .filter(holder -> holder.getValue().equals(t))
+                        .findFirst()
+                        .ifPresent(selectedElementsNodes::remove);
+            }
+        }
+
+        @Override
+        public boolean addAll(T... ts) {
+            return addAll(Arrays.asList(ts));
+        }
+
+        @Override
+        public boolean setAll(T... ts) {
+            return setAll(Arrays.asList(ts));
+        }
+
+        @Override
+        public boolean removeAll(T... ts) {
+            return removeAll(Arrays.asList(ts));
+        }
+
+        @Override
+        public boolean retainAll(T... ts) {
+            return retainAll(Arrays.asList(ts));
+        }
+
+        @Override
+        public boolean add(T t) {
+            super.add(t);
+            return selectedElementsNodes.add(holderBuilder.create(t));
+        }
+
+        E addAndReturnHolder(T t) {
+            super.add(t);
+            ElementHolder holder = holderBuilder.create(t);
+            selectedElementsNodes.add(holder);
+            return holder.elementNode;
+        }
     }
 
     private class ElementHolderBuilder {
