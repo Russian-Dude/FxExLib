@@ -349,6 +349,11 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
             return res;
         }
 
+        void replace(int i, T t) {
+            super.remove(i);
+            super.add(i, t);
+        }
+
         public void removeFirst(T t) {
             final T remove = this.stream()
                     .filter(t1 -> t1.equals(t))
@@ -441,6 +446,10 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
                     elementHolder.setValue(oldV);
                 }
                 if (elementHolder.userChangeValue && newV != null) {
+                    int index = selectedElementsNodes.indexOf(elementHolder);
+                    if (index >= 0) {
+                        selectedElements.replace(index, newV);
+                    }
                     selectedElementsNodes.forEach(SelectorContainer.this::setPredicateFor);
                     biOptions.forEach(option -> option.accept(elementHolder.elementNode, newV));
                 }

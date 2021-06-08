@@ -28,7 +28,6 @@ public class Main extends Application {
     private AnchorPane mainPane;
 
 
-
     public static void main(String[] args) {
         launch(args);
     }
@@ -61,7 +60,7 @@ public class Main extends Application {
         te1.setCollection(new ArrayList<>());
         List<TestClass> testClassList = List.of(te1, te2, te3, te4, te5, te6);
         ObservableList<TestClass> testClassObservableList = FXCollections.observableArrayList(
-                testClass -> new Observable[] { testClass.stringProperty });
+                testClass -> new Observable[]{testClass.stringProperty});
         testClassObservableList.addAll(testClassList);
         SearchComboBox<TestClass> searchComboBox = new SearchComboBox<>();
         searchComboBox.setCollection(testClassObservableList);
@@ -114,9 +113,9 @@ public class Main extends Application {
 
         var selectorContainer =
                 SelectorContainer.withAutocompletionTextField(testClassObservableList, List.of("qwerty", "asdfgh"))
-                .sizePercentages(80, 20)
-                .nameByProperty(TestClass::stringPropertyProperty)
-                .get();
+                        .sizePercentages(80, 20)
+                        .nameByProperty(TestClass::stringPropertyProperty)
+                        .get();
 
 /*        var selectorContainer = new SelectorContainerDepr<>(testClassList, SearchComboBox::new);
         selectorContainer.addOption(n -> n.setNameAndSearchBy(TestClass::getName));
@@ -153,7 +152,7 @@ public class Main extends Application {
 
     }
 
-    enum TestEnum { ONE, TWO, THREE, FOUR, FIVE }
+    enum TestEnum {ONE, TWO, THREE, FOUR, FIVE}
 
     class TestClass {
         private String name;
