@@ -85,6 +85,10 @@ public class ElementsHolder <T extends Node> extends ScrollPane {
         return elementNodeCreator;
     }
 
+    public void setCustomDeleteButton(Function<T, ? extends Button> customDeleteButton) {
+        this.customDeleteButton = customDeleteButton;
+    }
+
     public Function<T, ? extends Button> getCustomDeleteButton() {
         return customDeleteButton;
     }
