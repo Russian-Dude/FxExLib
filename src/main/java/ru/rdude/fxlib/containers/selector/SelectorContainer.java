@@ -283,6 +283,30 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
         });
     }
 
+    public void onChildrenAdded(Consumer<E> action) {
+        selectedElementsNodes.addListener((ListChangeListener<ElementHolder>) change -> {
+            while (change.next()) {
+                if (change.wasAdded()) {
+                    change.getAddedSubList().stream()
+                            .map(holder -> holder.elementNode)
+                            .forEach(action);
+                }
+            }
+        });
+    }
+
+    public void onChildrenRemoved(Consumer<E> action) {
+        selectedElementsNodes.addListener((ListChangeListener<ElementHolder>) change -> {
+            while (change.next()) {
+                if (change.wasRemoved()) {
+                    change.getRemoved().stream()
+                            .map(holder -> holder.elementNode)
+                            .forEach(action);
+                }
+            }
+        });
+    }
+
     // need to recreate predicate on selected elements list update to force filter.
     // using same object for predicate do not work so every time create new
     private void setPredicateFor(ElementHolder elementHolder) {
