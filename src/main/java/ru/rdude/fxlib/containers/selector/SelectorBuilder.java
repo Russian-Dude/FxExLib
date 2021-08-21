@@ -2,6 +2,8 @@ package ru.rdude.fxlib.containers.selector;
 
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.stage.StageStyle;
 import org.intellij.lang.annotations.RegExp;
 import ru.rdude.fxlib.boxes.SearchComboBox;
 import ru.rdude.fxlib.textfields.AutocompletionTextField;
@@ -33,6 +35,10 @@ public class SelectorBuilder {
 
     public static <T, V> TwoComboBoxesSelectorBuilder<T, V> withTwoComboBoxes (Collection<T> mainElements, Collection<V> secondElements) {
         return new TwoComboBoxesSelectorBuilder<>(mainElements, secondElements);
+    }
+
+    public static <T, P extends Node> WithPropertiesWindowSelectorBuilder<T, P> withPropertiesWindow (Collection<T> elements, Supplier<P> propertiesCreator) {
+        return new WithPropertiesWindowSelectorBuilder<>(elements, propertiesCreator);
     }
 
 
@@ -383,4 +389,69 @@ public class SelectorBuilder {
             return this;
         }
     }
+
+    ////////////////////////////////////////////////////
+    //                                                //
+    //              WITH PROPERTIES WINDOW            //
+    //                                                //
+    ////////////////////////////////////////////////////
+
+    public static class WithPropertiesWindowSelectorBuilder<T, P extends Node> extends SelectorBuilderType<T, SelectorElementWindowProperties<T, P>> {
+
+        public WithPropertiesWindowSelectorBuilder(Collection<T> mainCollection, Supplier<P> propertiesWindowCreator) {
+            super(mainCollection, () -> new SelectorElementWindowProperties<>(propertiesWindowCreator.get()));
+        }
+
+        @Override
+        public final WithPropertiesWindowSelectorBuilder<T, P> nameBy(Function<T, String> function) {
+            selectorContainer.setSearchDialogNameBy(function);
+            selectorContainer.addOption(s -> s.setNameBy(function));
+            return this;
+        }
+
+        @Override
+        public final WithPropertiesWindowSelectorBuilder<T, P> nameByProperty(Function<T, ObservableValue<String>> function) {
+            selectorContainer.setSearchDialogNameByProperty(function);
+            selectorContainer.addOption(s -> s.setNameByProperty(function));
+            return this;
+        }
+
+        @SafeVarargs
+        @Override
+        public final WithPropertiesWindowSelectorBuilder<T, P> searchBy(Function<T, String> function, Function<T, String>... functions) {
+            selectorContainer.setSearchDialogSearchBy(function, functions);
+            selectorContainer.addOption(s -> s.setSearchBy(function, functions));
+            return this;
+        }
+
+        @SafeVarargs
+        @Override
+        public final WithPropertiesWindowSelectorBuilder<T, P> searchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
+            selectorContainer.setSearchDialogSearchByProperty(function, functions);
+            selectorContainer.addOption(s -> s.setSearchByProperty(function, functions));
+            return this;
+        }
+
+        public final WithPropertiesWindowSelectorBuilder<T, P> disableSearch() {
+            selectorContainer.addOption(s -> s.setSearchEnabled(false));
+            return this;
+        }
+
+        public final WithPropertiesWindowSelectorBuilder<T, P> stageStile(StageStyle stageStyle) {
+            selectorContainer.addOption(s -> s.getPropertiesWindow().initStyle(stageStyle));
+            return this;
+        }
+
+        public final WithPropertiesWindowSelectorBuilder<T, P> stageOptions(Consumer<SelectorElementWindowProperties<?, ?>.PropertiesWindow> customize) {
+            selectorContainer.addOption(s -> customize.accept(s.getPropertiesWindow()));
+            return this;
+        }
+
+        public final WithPropertiesWindowSelectorBuilder<T, P> propertiesButtonOptions(Consumer<Button> customize) {
+            selectorContainer.addOption(s -> customize.accept(s.getButton()));
+            return this;
+        }
+
+    }
+
 }

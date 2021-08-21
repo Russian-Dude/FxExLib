@@ -65,6 +65,13 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
         return SelectorBuilder.withTwoComboBoxes(mainCollection, secondCollection);
     }
 
+    public static <T, V extends Node> SelectorBuilder.WithPropertiesWindowSelectorBuilder<T, V> withPropertiesWindow(
+            @NotNull Collection<T> collection,
+            @NotNull Supplier<V> propertiesWindowCreator
+    ){
+        return SelectorBuilder.withPropertiesWindow(collection, propertiesWindowCreator);
+    }
+
 
     public SelectorContainer(Collection<T> elements, Supplier<E> elementNodeCreator) {
         super();
