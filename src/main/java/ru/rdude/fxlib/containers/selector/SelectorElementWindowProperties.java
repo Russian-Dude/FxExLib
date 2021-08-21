@@ -9,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.layout.*;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import ru.rdude.fxlib.boxes.SearchComboBox;
@@ -119,6 +120,7 @@ public class SelectorElementWindowProperties<T, P extends Node> extends GridPane
 
         public PropertiesWindow(P inside) {
             super(StageStyle.UTILITY);
+            initModality(Modality.APPLICATION_MODAL);
             Scene scene = new Scene(new AnchorPane(inside));
             this.setScene(scene);
         }
