@@ -1,6 +1,5 @@
 package ru.rdude.fxlib.containers.selector;
 
-import com.sun.javafx.collections.ObservableListWrapper;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -42,34 +41,66 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
     private static final String SEARCH_BUTTON_STYLE_CLASS = "fxex-selector-container-search-button";
 
 
-    public static <T> SelectorBuilder.SimpleSelectorBuilder<T> simple(@NotNull Collection<T> collection) {
+    public static <T> SelectorBuilder.SimpleSelectorBuilder<T, SearchComboBox<T>> simple(@NotNull Collection<T> collection) {
         return SelectorBuilder.simple(collection);
     }
 
-    public static <T, V> SelectorBuilder.AutocompletionTextFieldSelectorBuilder<T, V> withAutocompletionTextField(
+    public static <T, E extends SearchComboBox<T>> SelectorBuilder.SimpleSelectorBuilder<T, E> simple(@NotNull Collection<T> collection, @NotNull Supplier<E> creator) {
+        return SelectorBuilder.simple(collection, creator);
+    }
+
+    public static <T, V> SelectorBuilder.AutocompletionTextFieldSelectorBuilder<T, V, SelectorElementAutocompletionTextField<T, V>> withAutocompletionTextField(
             @NotNull Collection<T> mainCollection, @NotNull Collection<V> secondCollection) {
         return SelectorBuilder.withAutoCompletionTextField(mainCollection, secondCollection);
     }
 
-    public static <T> SelectorBuilder.PercentSelectorBuilder<T> withPercents(@NotNull Collection<T> collection) {
+    public static <T, V, E extends SelectorElementAutocompletionTextField<T, V>> SelectorBuilder.AutocompletionTextFieldSelectorBuilder<T, V, E> withAutocompletionTextField(
+            @NotNull Collection<T> mainCollection, @NotNull Collection<V> secondCollection, @NotNull Supplier<E> creator) {
+        return SelectorBuilder.withAutoCompletionTextField(mainCollection, secondCollection, creator);
+    }
+
+    public static <T> SelectorBuilder.PercentSelectorBuilder<T, SelectorElementPercent<T>> withPercents(@NotNull Collection<T> collection) {
         return SelectorBuilder.withPercents(collection);
     }
 
-    public static <T> SelectorBuilder.TextFieldSelectorBuilder<T> withTextField(@NotNull Collection<T> collection) {
+    public static <T, E extends SelectorElementPercent<T>> SelectorBuilder.PercentSelectorBuilder<T, E> withPercents(@NotNull Collection<T> collection, @NotNull Supplier<E> creator) {
+        return SelectorBuilder.withPercents(collection, creator);
+    }
+
+    public static <T> SelectorBuilder.TextFieldSelectorBuilder<T, SelectorElementTextField<T>> withTextField(@NotNull Collection<T> collection) {
         return SelectorBuilder.withTextField(collection);
     }
 
-    public static <T, V> SelectorBuilder.TwoComboBoxesSelectorBuilder<T, V> withTwoComboBoxes(
+    public static <T, E extends SelectorElementTextField<T>> SelectorBuilder.TextFieldSelectorBuilder<T, E> withTextField(@NotNull Collection<T> collection, @NotNull Supplier<E> creator) {
+        return SelectorBuilder.withTextField(collection, creator);
+    }
+
+    public static <T, V> SelectorBuilder.TwoComboBoxesSelectorBuilder<T, V, SelectorElementTwoChoice<T, V>> withTwoComboBoxes(
             @NotNull Collection<T> mainCollection,
             @NotNull Collection<V> secondCollection) {
         return SelectorBuilder.withTwoComboBoxes(mainCollection, secondCollection);
     }
 
-    public static <T, V extends Node> SelectorBuilder.WithPropertiesWindowSelectorBuilder<T, V> withPropertiesWindow(
+    public static <T, V, E extends SelectorElementTwoChoice<T, V>> SelectorBuilder.TwoComboBoxesSelectorBuilder<T, V, E> withTwoComboBoxes(
+            @NotNull Collection<T> mainCollection,
+            @NotNull Collection<V> secondCollection,
+            @NotNull Supplier<E> creator) {
+        return SelectorBuilder.withTwoComboBoxes(mainCollection, secondCollection, creator);
+    }
+
+    public static <T, V extends Node> SelectorBuilder.WithPropertiesWindowSelectorBuilder<T, V, SelectorElementWindowProperties<T, V>> withPropertiesWindow(
             @NotNull Collection<T> collection,
             @NotNull Supplier<V> propertiesWindowCreator
     ){
         return SelectorBuilder.withPropertiesWindow(collection, propertiesWindowCreator);
+    }
+
+    public static <T, V extends Node, E extends SelectorElementWindowProperties<T, V>> SelectorBuilder.WithPropertiesWindowSelectorBuilder<T, V, E> withPropertiesWindow(
+            @NotNull Collection<T> collection,
+            @NotNull Supplier<V> propertiesWindowCreator,
+            @NotNull Function<V, E> creator
+    ){
+        return SelectorBuilder.withPropertiesWindow(collection, propertiesWindowCreator, creator);
     }
 
 
