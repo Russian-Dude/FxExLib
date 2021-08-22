@@ -11,7 +11,7 @@ import ru.rdude.fxlib.boxes.SearchComboBox;
 import java.util.Collection;
 import java.util.function.Function;
 
-public class SelectorElementTextField<T> extends GridPane implements SelectorElementNode<T> {
+public class SelectorElementTextField<T> extends GridPane implements NamedSelectorElementNode<T> {
 
     private final SearchComboBox<T> searchComboBox = new SearchComboBox<>();
     private final TextField textField = new TextField();

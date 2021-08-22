@@ -68,26 +68,52 @@ public class SelectorBuilder {
 
 
 
-    public static abstract class SelectorBuilderType<T, E extends Node & SelectorElementNode<T>> {
+    public static abstract class SelectorBuilderType<T, E extends Node & NamedSelectorElementNode<T>, B extends SelectorBuilderType<T, E, B>> {
         final SelectorContainer<T, E> selectorContainer;
 
         private SelectorBuilderType(Collection<T> elements, Supplier<E> elementNodeCreator) {
             this.selectorContainer = new SelectorContainer<>(elements, elementNodeCreator);
         }
 
-        public SelectorBuilderType<T, E> addOption(Consumer<E> option) {
+        public B addOption(Consumer<E> option) {
             selectorContainer.addOption(option);
-            return this;
+            return (B) this;
+        }
+
+        public B setUnique(boolean value) {
+            selectorContainer.setUnique(value);
+            return (B) this;
         }
 
         public SelectorContainer<T, E> get() {
             return selectorContainer;
         }
 
-        public abstract SelectorBuilderType<T, E> nameBy(Function<T, String> function);
-        public abstract SelectorBuilderType<T, E> nameByProperty(Function<T, ObservableValue<String>> function);
-        public abstract SelectorBuilderType<T, E> searchBy(Function<T, String> function, Function<T, String>... functions);
-        public abstract SelectorBuilderType<T, E> searchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions);
+        public final B nameBy(Function<T, String> function) {
+            selectorContainer.setSearchDialogNameBy(function);
+            selectorContainer.addOption(s -> s.setNameBy(function));
+            return (B) this;
+        }
+
+        public final B nameByProperty(Function<T, ObservableValue<String>> function) {
+            selectorContainer.setSearchDialogNameByProperty(function);
+            selectorContainer.addOption(s -> s.setNameByProperty(function));
+            return (B) this;
+        }
+
+        @SafeVarargs
+        public final B searchBy(Function<T, String> function, Function<T, String>... functions) {
+            selectorContainer.setSearchDialogSearchBy(function, functions);
+            selectorContainer.addOption(s -> s.setSearchBy(function, functions));
+            return (B) this;
+        }
+
+        @SafeVarargs
+        public final B searchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
+            selectorContainer.setSearchDialogSearchByProperty(function, functions);
+            selectorContainer.addOption(s -> s.setSearchByProperty(function, functions));
+            return (B) this;
+        }
 
     }
 
@@ -99,39 +125,9 @@ public class SelectorBuilder {
     ////////////////////////////////////////////////////
 
 
-    public final static class SimpleSelectorBuilder<T, E extends SearchComboBox<T>> extends SelectorBuilderType<T, E> {
+    public final static class SimpleSelectorBuilder<T, E extends SearchComboBox<T>> extends SelectorBuilderType<T, E, SimpleSelectorBuilder<T, E>> {
         private SimpleSelectorBuilder(Collection<T> collection, Supplier<E> creator) {
             super(collection, creator);
-        }
-
-        @Override
-        public final SimpleSelectorBuilder<T, E> nameBy(Function<T, String> function) {
-            selectorContainer.setSearchDialogNameBy(function);
-            selectorContainer.addOption(s -> s.setNameBy(function));
-            return this;
-        }
-
-        @Override
-        public final SimpleSelectorBuilder<T, E> nameByProperty(Function<T, ObservableValue<String>> function) {
-            selectorContainer.setSearchDialogNameByProperty(function);
-            selectorContainer.addOption(s -> s.setNameByProperty(function));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final SimpleSelectorBuilder<T, E> searchBy(Function<T, String> function, Function<T, String>... functions) {
-            selectorContainer.setSearchDialogSearchBy(function, functions);
-            selectorContainer.addOption(s -> s.setSearchBy(function, functions));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final SimpleSelectorBuilder<T, E> searchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
-            selectorContainer.setSearchDialogSearchByProperty(function, functions);
-            selectorContainer.addOption(s -> s.setSearchByProperty(function, functions));
-            return this;
         }
 
         public final SimpleSelectorBuilder<T, E> disableSearch() {
@@ -149,41 +145,11 @@ public class SelectorBuilder {
 
 
     public static final class AutocompletionTextFieldSelectorBuilder<T, V, E extends SelectorElementAutocompletionTextField<T, V>>
-            extends SelectorBuilderType<T, E> {
+            extends SelectorBuilderType<T, E, AutocompletionTextFieldSelectorBuilder<T, V, E>> {
 
         private AutocompletionTextFieldSelectorBuilder(Collection<T> collection, Collection<V> autocompletionCollection, Supplier<E> creator) {
             super(collection, creator);
             selectorContainer.addOption(n -> n.setTextFieldElements(autocompletionCollection));
-        }
-
-        @Override
-        public final AutocompletionTextFieldSelectorBuilder<T, V, E> nameBy(Function<T, String> function) {
-            selectorContainer.setSearchDialogNameBy(function);
-            selectorContainer.addOption(s -> s.setNameBy(function));
-            return this;
-        }
-
-        @Override
-        public final AutocompletionTextFieldSelectorBuilder<T, V, E> nameByProperty(Function<T, ObservableValue<String>> function) {
-            selectorContainer.setSearchDialogNameByProperty(function);
-            selectorContainer.addOption(s -> s.setNameByProperty(function));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final AutocompletionTextFieldSelectorBuilder<T, V, E> searchBy(Function<T, String> function, Function<T, String>... functions) {
-            selectorContainer.setSearchDialogSearchBy(function, functions);
-            selectorContainer.addOption(s -> s.setSearchBy(function, functions));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final AutocompletionTextFieldSelectorBuilder<T, V, E> searchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
-            selectorContainer.setSearchDialogSearchByProperty(function, functions);
-            selectorContainer.addOption(s -> s.setSearchByProperty(function, functions));
-            return this;
         }
 
         public final AutocompletionTextFieldSelectorBuilder<T, V, E> textFieldNameBy(Function<V, String> function) {
@@ -235,40 +201,10 @@ public class SelectorBuilder {
     ////////////////////////////////////////////////////
 
 
-    public static class PercentSelectorBuilder<T, E extends SelectorElementPercent<T>> extends SelectorBuilderType<T, E> {
+    public static class PercentSelectorBuilder<T, E extends SelectorElementPercent<T>> extends SelectorBuilderType<T, E, PercentSelectorBuilder<T, E>> {
 
         private PercentSelectorBuilder(Collection<T> elements, Supplier<E> creator) {
             super(elements, creator);
-        }
-
-        @Override
-        public final PercentSelectorBuilder<T, E> nameBy(Function<T, String> function) {
-            selectorContainer.setSearchDialogNameBy(function);
-            selectorContainer.addOption(s -> s.setNameBy(function));
-            return this;
-        }
-
-        @Override
-        public final PercentSelectorBuilder<T, E> nameByProperty(Function<T, ObservableValue<String>> function) {
-            selectorContainer.setSearchDialogNameByProperty(function);
-            selectorContainer.addOption(s -> s.setNameByProperty(function));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final PercentSelectorBuilder<T, E> searchBy(Function<T, String> function, Function<T, String>... functions) {
-            selectorContainer.setSearchDialogSearchBy(function, functions);
-            selectorContainer.addOption(s -> s.setSearchBy(function, functions));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final PercentSelectorBuilder<T, E> searchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
-            selectorContainer.setSearchDialogSearchByProperty(function, functions);
-            selectorContainer.addOption(s -> s.setSearchByProperty(function, functions));
-            return this;
         }
 
         public final PercentSelectorBuilder<T, E> disableSearch() {
@@ -290,40 +226,10 @@ public class SelectorBuilder {
     ////////////////////////////////////////////////////
 
 
-    public static class TextFieldSelectorBuilder<T, E extends SelectorElementTextField<T>> extends SelectorBuilderType<T, E> {
+    public static class TextFieldSelectorBuilder<T, E extends SelectorElementTextField<T>> extends SelectorBuilderType<T, E, TextFieldSelectorBuilder<T, E>> {
 
         private TextFieldSelectorBuilder(Collection<T> elements, Supplier<E> creator) {
             super(elements, creator);
-        }
-
-        @Override
-        public final TextFieldSelectorBuilder<T, E> nameBy(Function<T, String> function) {
-            selectorContainer.setSearchDialogNameBy(function);
-            selectorContainer.addOption(s -> s.setNameBy(function));
-            return this;
-        }
-
-        @Override
-        public final TextFieldSelectorBuilder<T, E> nameByProperty(Function<T, ObservableValue<String>> function) {
-            selectorContainer.setSearchDialogNameByProperty(function);
-            selectorContainer.addOption(s -> s.setNameByProperty(function));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final TextFieldSelectorBuilder<T, E> searchBy(Function<T, String> function, Function<T, String>... functions) {
-            selectorContainer.setSearchDialogSearchBy(function, functions);
-            selectorContainer.addOption(s -> s.setSearchBy(function, functions));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final TextFieldSelectorBuilder<T, E> searchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
-            selectorContainer.setSearchDialogSearchByProperty(function, functions);
-            selectorContainer.addOption(s -> s.setSearchByProperty(function, functions));
-            return this;
         }
 
         public final TextFieldSelectorBuilder<T, E> disableSearch() {
@@ -345,41 +251,11 @@ public class SelectorBuilder {
     ////////////////////////////////////////////////////
 
 
-    public static class TwoComboBoxesSelectorBuilder<T, V, E extends SelectorElementTwoChoice<T, V>> extends SelectorBuilderType<T, E> {
+    public static class TwoComboBoxesSelectorBuilder<T, V, E extends SelectorElementTwoChoice<T, V>> extends SelectorBuilderType<T, E, TwoComboBoxesSelectorBuilder<T, V, E>> {
 
         public TwoComboBoxesSelectorBuilder(Collection<T> mainCollection, Collection<V> secondCollection, Supplier<E> creator) {
             super(mainCollection, creator);
             addOption(n -> n.setSecondCollection(secondCollection));
-        }
-
-        @Override
-        public final TwoComboBoxesSelectorBuilder<T, V, E> nameBy(Function<T, String> function) {
-            selectorContainer.setSearchDialogNameBy(function);
-            selectorContainer.addOption(s -> s.setNameBy(function));
-            return this;
-        }
-
-        @Override
-        public final TwoComboBoxesSelectorBuilder<T, V, E> nameByProperty(Function<T, ObservableValue<String>> function) {
-            selectorContainer.setSearchDialogNameByProperty(function);
-            selectorContainer.addOption(s -> s.setNameByProperty(function));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final TwoComboBoxesSelectorBuilder<T, V, E> searchBy(Function<T, String> function, Function<T, String>... functions) {
-            selectorContainer.setSearchDialogSearchBy(function, functions);
-            selectorContainer.addOption(s -> s.setSearchBy(function, functions));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final TwoComboBoxesSelectorBuilder<T, V, E> searchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
-            selectorContainer.setSearchDialogSearchByProperty(function, functions);
-            selectorContainer.addOption(s -> s.setSearchByProperty(function, functions));
-            return this;
         }
 
         public final TwoComboBoxesSelectorBuilder<T, V, E> disableSearch() {
@@ -421,40 +297,10 @@ public class SelectorBuilder {
     //                                                //
     ////////////////////////////////////////////////////
 
-    public static class WithPropertiesWindowSelectorBuilder<T, P extends Node, E extends SelectorElementWindowProperties<T, P>> extends SelectorBuilderType<T, E> {
+    public static class WithPropertiesWindowSelectorBuilder<T, P extends Node, E extends SelectorElementWindowProperties<T, P>> extends SelectorBuilderType<T, E, WithPropertiesWindowSelectorBuilder<T, P, E>> {
 
         public WithPropertiesWindowSelectorBuilder(Collection<T> mainCollection, Supplier<P> propertiesWindowCreator, Function<P, E> creator) {
             super(mainCollection, () -> creator.apply(propertiesWindowCreator.get()));
-        }
-
-        @Override
-        public final WithPropertiesWindowSelectorBuilder<T, P, E> nameBy(Function<T, String> function) {
-            selectorContainer.setSearchDialogNameBy(function);
-            selectorContainer.addOption(s -> s.setNameBy(function));
-            return this;
-        }
-
-        @Override
-        public final WithPropertiesWindowSelectorBuilder<T, P, E> nameByProperty(Function<T, ObservableValue<String>> function) {
-            selectorContainer.setSearchDialogNameByProperty(function);
-            selectorContainer.addOption(s -> s.setNameByProperty(function));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final WithPropertiesWindowSelectorBuilder<T, P, E> searchBy(Function<T, String> function, Function<T, String>... functions) {
-            selectorContainer.setSearchDialogSearchBy(function, functions);
-            selectorContainer.addOption(s -> s.setSearchBy(function, functions));
-            return this;
-        }
-
-        @SafeVarargs
-        @Override
-        public final WithPropertiesWindowSelectorBuilder<T, P, E> searchByProperty(Function<T, ObservableValue<String>> function, Function<T, ObservableValue<String>>... functions) {
-            selectorContainer.setSearchDialogSearchByProperty(function, functions);
-            selectorContainer.addOption(s -> s.setSearchByProperty(function, functions));
-            return this;
         }
 
         public final WithPropertiesWindowSelectorBuilder<T, P, E> disableSearch() {

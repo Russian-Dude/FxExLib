@@ -3,6 +3,7 @@ import javafx.beans.Observable;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -11,7 +12,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import ru.rdude.fxlib.boxes.SearchComboBox;
+import ru.rdude.fxlib.containers.elementsholder.ElementsHolder;
 import ru.rdude.fxlib.containers.selector.SelectorContainer;
+import ru.rdude.fxlib.containers.selector.SelectorElementWindowProperties;
 import ru.rdude.fxlib.panes.SearchPane;
 import ru.rdude.fxlib.textfields.AutocompletionTextField;
 
@@ -21,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Main extends Application {
 
@@ -150,6 +154,41 @@ public class Main extends Application {
 
         searchComboBox.setOnAction(event -> System.out.println(searchComboBox.getValue().name));
 
+
+        Supplier<ComboBox<TestClass>> supplier = () -> new ComboBox<>(testClassObservableList);
+        ElementsHolder<ComboBox<TestClass>> elementsHolder = new ElementsHolder<>(supplier);
+        elementsHolder.setMinWidth(120);
+        elementsHolder.setMinHeight(120);
+        elementsHolder.setMaxHeight(120);
+        hBox.getChildren().add(elementsHolder);
+
+        Supplier<VBox> propertiesSupplier = () -> {
+            VBox vBox = new VBox();
+            vBox.setAlignment(Pos.CENTER);
+            vBox.getChildren().add(new Label("This is label 1"));
+            vBox.getChildren().add(new TextField());
+            vBox.getChildren().add(new Label("This is another label"));
+            vBox.resize(100, 100);
+            return vBox;
+        };
+        final var props = SelectorContainer.withPropertiesWindow(testClassList, propertiesSupplier)
+                .nameBy(TestClass::getName)
+                .get();
+        props.setMinWidth(400);
+        props.setMinHeight(120);
+        props.setMaxHeight(120);
+        hBox.getChildren().add(props);
+
+        SelectorContainer.simple(testClassList, (Supplier<Booba<TestClass>>) Booba::new)
+                .nameBy(TestClass::getName)
+                .setUnique(true)
+                .addOption(Booba::o)
+                .get();
+    }
+
+    public static class Booba<T> extends SearchComboBox<T> {
+        public void o() {
+        }
     }
 
     enum TestEnum {ONE, TWO, THREE, FOUR, FIVE}

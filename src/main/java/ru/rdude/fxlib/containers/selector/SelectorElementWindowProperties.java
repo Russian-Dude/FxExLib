@@ -17,7 +17,7 @@ import ru.rdude.fxlib.boxes.SearchComboBox;
 import java.util.Collection;
 import java.util.function.Function;
 
-public class SelectorElementWindowProperties<T, P extends Node> extends GridPane implements SelectorElementNode<T> {
+public class SelectorElementWindowProperties<T, P extends Node> extends GridPane implements NamedSelectorElementNode<T> {
 
     private final SearchComboBox<T> searchComboBox = new SearchComboBox<>();
     private final Button button = new Button("✎");
@@ -33,6 +33,8 @@ public class SelectorElementWindowProperties<T, P extends Node> extends GridPane
 
         searchComboBox.setMaxWidth(Double.MAX_VALUE);
         searchComboBox.setMinWidth(0);
+        setFillWidth(searchComboBox, true);
+        setHgrow(searchComboBox, Priority.ALWAYS);
         button.setMaxWidth(Double.MAX_VALUE);
         button.setMinWidth(30);
         ColumnConstraints comboBoxConstraints = new ColumnConstraints();

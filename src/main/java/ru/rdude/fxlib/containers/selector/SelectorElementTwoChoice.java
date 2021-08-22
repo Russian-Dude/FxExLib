@@ -9,7 +9,7 @@ import ru.rdude.fxlib.boxes.SearchComboBox;
 import java.util.Collection;
 import java.util.function.Function;
 
-public class SelectorElementTwoChoice<T, V> extends GridPane implements SelectorElementNode<T> {
+public class SelectorElementTwoChoice<T, V> extends GridPane implements NamedSelectorElementNode<T> {
 
     private final SearchComboBox<T> searchComboBox = new SearchComboBox<>();
     private final SearchComboBox<V> secondSearchComboBox = new SearchComboBox<>();

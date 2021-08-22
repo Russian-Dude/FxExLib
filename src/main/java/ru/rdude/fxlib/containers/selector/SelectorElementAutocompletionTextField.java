@@ -13,7 +13,7 @@ import ru.rdude.fxlib.textfields.AutocompletionTextField;
 import java.util.Collection;
 import java.util.function.Function;
 
-public class SelectorElementAutocompletionTextField<T, V> extends GridPane implements SelectorElementNode<T> {
+public class SelectorElementAutocompletionTextField<T, V> extends GridPane implements NamedSelectorElementNode<T> {
 
     private final SearchComboBox<T> searchComboBox = new SearchComboBox<>();
     private final AutocompletionTextField<V> textField = new AutocompletionTextField<>();

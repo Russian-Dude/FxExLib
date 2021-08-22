@@ -8,6 +8,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.util.StringConverter;
+import ru.rdude.fxlib.containers.selector.NamedSelectorElementNode;
 import ru.rdude.fxlib.containers.selector.SelectorElementNode;
 import utils.FunctionRawOrProperty;
 
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
  * Both options can be set at once with setNameAndSearchBy() method.
  * Items can be set from any collection by using setCollection() method.
  */
-public class SearchComboBox<T> extends ComboBox<T> implements SelectorElementNode<T> {
+public class SearchComboBox<T> extends ComboBox<T> implements NamedSelectorElementNode<T> {
 
     private FilteredList<T> filteredList;
     private boolean isTyped;
