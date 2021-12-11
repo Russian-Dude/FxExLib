@@ -314,7 +314,8 @@ public class SelectorContainer<T, E extends Node & SelectorElementNode<T>> exten
         // need to reassign value because filtered list changes makes value become null
         T storedValue = elementHolder.getValue();
         elementHolder.collection.setPredicate(
-                t -> t.equals(elementHolder.getValue()) || selectedElementsNodes.stream().map(ElementHolder::getValue).noneMatch(t::equals));
+                t ->    !uniqueProperty().getValue() ||
+                        (t.equals(elementHolder.getValue()) || selectedElementsNodes.stream().map(ElementHolder::getValue).noneMatch(t::equals)));
         elementHolder.setValue(storedValue);
         elementHolder.userChangeValue = true;
     }
