@@ -3,6 +3,8 @@ package ru.rdude.fxlib.containers.elementsholder;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
@@ -113,12 +115,19 @@ public class ElementsHolder <T extends Node> extends ScrollPane {
                 deleteButton = new Button("X");
                 deleteButton.getStyleClass().add(REMOVE_BUTTON_STYLE_CLASS);
                 deleteButton.setMinWidth(5);
-                setRight(deleteButton);
+                deleteButton.setOnAction(action -> remove(elementNode));
             }
             else {
                 deleteButton = customDeleteButton.apply(elementNode);
+                EventHandler<ActionEvent> onAction = deleteButton.getOnAction();
+                deleteButton.setOnAction(action -> {
+                    if (onAction != null) {
+                        onAction.handle(action);
+                    }
+                    remove(elementNode);
+                });
             }
-            deleteButton.setOnAction(action -> remove(elementNode));
+            setRight(deleteButton);
         }
     }
 
