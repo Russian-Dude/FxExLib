@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="FxLib">
-    <output-path>$PROJECT_DIR$/jar/FxExLib</output-path>
-    <root id="archive" name="FxExLib.jar">
-      <element id="module-output" name="FxLib" />
-    </root>
-  </artifact>
-</component>
